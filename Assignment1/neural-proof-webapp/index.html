@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neural Network Proof Lab</title>
+  <meta name="description" content="Interactive proofs for activations, depth, embeddings, and generalization." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+
+  <header class="hero">
+    <nav class="nav">
+      <div class="brand"><span class="brand-mark">NN</span> Proof Lab</div>
+      <a href="#run" class="nav-link">Run proofs</a>
+    </nav>
+    <section class="hero-grid">
+      <div>
+        <p class="eyebrow">S1 neural-net concepts · browser-only demo</p>
+        <h1>Four visual proofs that make neural networks feel obvious.</h1>
+        <p class="hero-copy">
+          This static webapp trains tiny models live in your browser and draws the evidence:
+          straight-line failures, ReLU boundaries that bend, embedding clusters, and the train/test gap.
+        </p>
+        <div class="hero-actions" id="run">
+          <button class="primary" id="runAllBtn">Run all four proofs</button>
+          <button class="secondary" id="resetBtn">Reset</button>
+        </div>
+        <p class="microcopy">No server. No build step. Drop this folder into Netlify.</p>
+      </div>
+      <div class="hero-card">
+        <div class="metric-big" id="overallStatus">Ready</div>
+        <p>Each card below contains a claim, the experiment, and the visual proof.</p>
+        <div class="legend-row">
+          <span><i class="dot dot-zero"></i>Class 0</span>
+          <span><i class="dot dot-one"></i>Class 1</span>
+          <span><i class="dot dot-line"></i>Decision field</span>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="proof-card" id="s1-1">
+      <div class="proof-head">
+        <div>
+          <p class="eyebrow">S1-1 · Activations exist for a reason</p>
+          <h2>Linear boundary vs one ReLU hidden layer</h2>
+          <p>A single linear layer can only separate space with a line. A ReLU hidden layer can compose many half-planes into a curved-looking boundary.</p>
+        </div>
+        <button class="small" id="runS11">Run S1-1</button>
+      </div>
+      <div class="canvas-grid two">
+        <figure>
+          <canvas id="linearCanvas" width="520" height="420"></canvas>
+          <figcaption><strong>Linear + sigmoid</strong><span id="linearStats">waiting</span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="reluCanvas" width="520" height="420"></canvas>
+          <figcaption><strong>One hidden layer + ReLU</strong><span id="reluStats">waiting</span></figcaption>
+        </figure>
+      </div>
+      <div class="takeaway" id="s11Takeaway">The money shot appears after training: the linear model remains a line; ReLU wraps the ring.</div>
+    </section>
+
+    <section class="proof-card" id="s1-2">
+      <div class="proof-head">
+        <div>
+          <p class="eyebrow">S1-2 · Depth without nonlinearity is a lie</p>
+          <h2>Five linear layers still collapse to one line</h2>
+          <p>Stacking affine maps without activation creates another affine map. Insert ReLUs between the same depth and the boundary can bend.</p>
+        </div>
+        <button class="small" id="runS12">Run S1-2</button>
+      </div>
+      <div class="canvas-grid three">
+        <figure>
+          <canvas id="oneLinearCanvas" width="420" height="360"></canvas>
+          <figcaption><strong>1 linear layer</strong><span id="oneLinearStats">waiting</span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="fiveLinearCanvas" width="420" height="360"></canvas>
+          <figcaption><strong>5 linear layers, no activation</strong><span id="fiveLinearStats">waiting</span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="fiveReluCanvas" width="420" height="360"></canvas>
+          <figcaption><strong>5 layers + ReLU</strong><span id="fiveReluStats">waiting</span></figcaption>
+        </figure>
+      </div>
+      <div class="matrix-box">
+        <div>
+          <h3>Collapsed 5-linear product</h3>
+          <p>The app multiplies the five learned matrices and biases into one equivalent layer:</p>
+        </div>
+        <pre id="productMatrix">Run S1-2 to compute W_eff and b_eff.</pre>
+      </div>
+    </section>
+
+    <section class="proof-card" id="s1-3">
+      <div class="proof-head">
+        <div>
+          <p class="eyebrow">S1-3 · Embeddings learn similarity from next-token</p>
+          <h2>Category clusters emerge from prediction only</h2>
+          <p>A tiny embedding→softmax model sees no similarity labels. Tokens that share next-token distributions still land near each other.</p>
+        </div>
+        <button class="small" id="runS13">Run S1-3</button>
+      </div>
+      <div class="embedding-layout">
+        <figure>
+          <canvas id="embeddingCanvas" width="720" height="460"></canvas>
+          <figcaption><strong>2D PCA projection of learned embeddings</strong><span id="embedStats">waiting</span></figcaption>
+        </figure>
+        <div class="neighbor-card">
+          <h3>Nearest neighbors</h3>
+          <div id="neighborTable" class="table-placeholder">Run S1-3 to reveal learned neighbors.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="proof-card" id="s1-4">
+      <div class="proof-head">
+        <div>
+          <p class="eyebrow">S1-4 · Memorization vs generalization</p>
+          <h2>More data closes the train/test gap</h2>
+          <p>An over-parameterized network memorizes 20 noisy examples. As the dataset grows, the held-out loss moves closer to the train loss.</p>
+        </div>
+        <button class="small" id="runS14">Run S1-4</button>
+      </div>
+      <div class="gap-layout">
+        <figure>
+          <canvas id="gapCanvas" width="760" height="460"></canvas>
+          <figcaption><strong>Generalization gap by train size</strong><span id="gapStats">waiting</span></figcaption>
+        </figure>
+        <div class="results-card">
+          <h3>Train/test results</h3>
+          <div id="gapTable" class="table-placeholder">Run S1-4 to train three dataset sizes.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built as a static Netlify-ready webapp. Refresh to regenerate with the same deterministic seeds.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
