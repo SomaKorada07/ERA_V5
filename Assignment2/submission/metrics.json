@@ -1,0 +1,49 @@
+{
+  "variant": "wiki_faithful_markdown",
+  "fourth_language": "la",
+  "languages": {
+    "en": "English",
+    "hi": "Hindi",
+    "te": "Telugu",
+    "la": "Latin"
+  },
+  "weights": {
+    "en": 3,
+    "hi": 8,
+    "te": 11,
+    "la": 7
+  },
+  "vocab_size": 10000,
+  "wordish_units": {
+    "en": 89417,
+    "hi": 42151,
+    "te": 16109,
+    "la": 10569
+  },
+  "token_counts": {
+    "en": 117557,
+    "hi": 49930,
+    "te": 19385,
+    "la": 13587
+  },
+  "unk_counts": {
+    "en": 0,
+    "hi": 0,
+    "te": 0,
+    "la": 0
+  },
+  "ratios": {
+    "en": 1.3147052573895344,
+    "hi": 1.1845507817133638,
+    "te": 1.203364578806878,
+    "la": 1.2855520862900938
+  },
+  "min_lang": "hi",
+  "max_lang": "en",
+  "spread": 0.13015447567617056,
+  "raw_score": 7683.177968370748,
+  "hindi_fertility": 1.1845507817133638,
+  "hindi_ok": true,
+  "hindi_penalty_factor": 1.0,
+  "adjusted_score": 7683.177968370748
+}

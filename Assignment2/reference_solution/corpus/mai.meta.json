@@ -1,0 +1,9 @@
+{
+  "lang": "mai",
+  "source": "mai.raw.html",
+  "variant": "wiki_faithful_markdown",
+  "generated_at": "2026-07-13T04:35:22Z",
+  "wordish_units": 2568,
+  "chars": 17919,
+  "policy": "Markdown converted from Wikipedia REST HTML body. Preserves visible article content, references, tables, image links, navboxes, categories, and absolute link targets where markdownify emits them; removes only scripts/styles/meta/link machinery."
+}

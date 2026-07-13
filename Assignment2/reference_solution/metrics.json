@@ -1,0 +1,35 @@
+{
+  "variant": "wiki_faithful_markdown",
+  "fourth_language": "mai",
+  "weights": {
+    "en": 3,
+    "hi": 4,
+    "te": 4,
+    "mai": 2
+  },
+  "vocab_size": 10000,
+  "token_counts": {
+    "en": 109210,
+    "hi": 50256,
+    "te": 21735,
+    "mai": 3509
+  },
+  "wordish_units": {
+    "en": 89417,
+    "hi": 42151,
+    "te": 16109,
+    "mai": 2568
+  },
+  "ratios": {
+    "en": 1.2213561179641454,
+    "hi": 1.1922848805485042,
+    "te": 1.3492457632379415,
+    "mai": 1.3664330218068537
+  },
+  "spread": 0.17414814125834943,
+  "score": 5742.237572989632,
+  "notes": [
+    "Hindi <= 1.2 is satisfied.",
+    "English <= 1.2 is not satisfied; English ratio is slightly high."
+  ]
+}
