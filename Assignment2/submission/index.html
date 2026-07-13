@@ -32,6 +32,8 @@
   .btn{background:var(--accent);color:#00121f;border:0;border-radius:8px;padding:10px 16px;
        font-weight:700;cursor:pointer;font-size:14px}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn.sm{padding:6px 12px;font-size:13px}
   textarea,input{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
        border-radius:8px;padding:10px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
   .toks{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
@@ -96,10 +98,18 @@
     <div class="toks" id="pg_out"></div>
   </div>
 
-  <h2>Vocabulary browser (10,000 tokens)</h2>
+  <h2>Vocabulary browser (all 10,000 tokens)</h2>
   <div class="panel">
-    <input id="q" placeholder="search token or id… (e.g. भारत, wiki, 42)"/>
-    <div id="vocab" class="toks" style="margin-top:12px;max-height:320px;overflow:auto"></div>
+    <input id="q" placeholder="search token or id… (e.g. भारत, wiki, 42) — leave blank to page through all 10k"/>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost sm" id="first">« First</button>
+      <button class="btn ghost sm" id="prev">‹ Prev</button>
+      <span class="pill" id="pageinfo"></span>
+      <button class="btn ghost sm" id="next">Next ›</button>
+      <button class="btn ghost sm" id="last">Last »</button>
+      <span class="muted" id="vcount"></span>
+    </div>
+    <div id="vocab" class="toks" style="margin-top:12px;max-height:420px;overflow:auto"></div>
   </div>
 
   <p class="muted">Reproduce locally: <code>pip install tokenizers regex</code> →
@@ -232,20 +242,45 @@ function runPg(){
 }
 pg.addEventListener('input',runPg); runPg();
 
-// ---- vocab browser ----
+// ---- vocab browser (paginated, browses ALL 10,000 tokens) ----
 const q=document.getElementById('q'); const vc=document.getElementById('vocab');
-function renderVocab(){
-  const term=q.value.trim().toLowerCase(); vc.innerHTML='';
-  let n=0;
-  for(let id=0; id<ID2TOK.length && n<500; id++){
+const PAGE=250; let page=0; let filtered=[];
+function rebuild(){
+  const term=q.value.trim().toLowerCase();
+  filtered=[];
+  for(let id=0; id<ID2TOK.length; id++){
     const t=ID2TOK[id]; if(t===undefined) continue;
     if(term && !(t.toLowerCase().includes(term) || (''+id)===term)) continue;
-    const s=document.createElement('span'); s.className='tok';
-    s.textContent = id+'·'+t; vc.appendChild(s); n++;
+    filtered.push([id,t]);
   }
-  if(n===0) vc.innerHTML='<span class="muted">no matches</span>';
+  page=0; renderPage();
 }
-q.addEventListener('input',renderVocab); renderVocab();
+function renderPage(){
+  const pages=Math.max(1, Math.ceil(filtered.length/PAGE));
+  if(page>=pages) page=pages-1; if(page<0) page=0;
+  vc.innerHTML='';
+  const start=page*PAGE, end=Math.min(filtered.length, start+PAGE);
+  for(let i=start;i<end;i++){
+    const [id,t]=filtered[i];
+    const s=document.createElement('span'); s.className='tok';
+    s.textContent = id+'·'+t; vc.appendChild(s);
+  }
+  if(filtered.length===0) vc.innerHTML='<span class="muted">no matches</span>';
+  document.getElementById('pageinfo').textContent =
+    'page '+(page+1)+' / '+pages+'  (tokens '+(filtered.length?start+1:0)+'–'+end+')';
+  document.getElementById('vcount').textContent =
+    filtered.length.toLocaleString()+(q.value.trim()?' matched':' total');
+  document.getElementById('first').disabled = page<=0;
+  document.getElementById('prev').disabled  = page<=0;
+  document.getElementById('next').disabled  = page>=pages-1;
+  document.getElementById('last').disabled  = page>=pages-1;
+  vc.scrollTop=0;
+}
+document.getElementById('first').onclick=()=>{page=0;renderPage();};
+document.getElementById('prev').onclick =()=>{page--;renderPage();};
+document.getElementById('next').onclick =()=>{page++;renderPage();};
+document.getElementById('last').onclick =()=>{page=Infinity;renderPage();};
+q.addEventListener('input',rebuild); rebuild();
 </script>
 </body>
 </html>
