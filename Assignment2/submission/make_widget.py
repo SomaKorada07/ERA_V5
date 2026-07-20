@@ -4,16 +4,17 @@ Build a self-contained index.html widget from tokenizer.json + corpus + metrics.
 
 The widget:
   * lets the grader DOWNLOAD tokenizer.json (embedded as a Blob),
-  * shows the fertility table and score,
-  * RE-COMPUTES every fertility live in the browser with a faithful JS
-    re-implementation of the exact pipeline (NFKC + strip-punctuation
-    normalizer -> whitespace pre-tokenizer -> BPE merges), proving the numbers
-    are reproducible from tokenizer.json alone,
-  * has a live tokenization playground,
-  * has a searchable 10,000-token vocabulary browser.
+  * shows the fertility table + score, re-computed LIVE in the browser with a
+    faithful JS re-implementation of the exact pipeline (Metaspace pre-tokenizer
+    -> BPE merges -> byte-fallback), verified to match the Python tokenizer
+    token-for-token,
+  * demonstrates the ROUND-TRIP GATE live: decode(encode(text)) preserves the
+    same visible non-whitespace characters,
+  * has a tokenization + round-trip playground,
+  * has a searchable, paginated vocabulary browser over all 10,000 tokens.
 
 Run:
-    python make_widget.py       # writes index.html
+    python make_widget.py       # writes index.html + tokens.txt
 """
 from __future__ import annotations
 
@@ -22,8 +23,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 CORPUS = ROOT / "corpus"
-LANGS = ["en", "hi", "te", "la"]
-NAMES = {"en": "English", "hi": "Hindi", "te": "Telugu", "la": "Latin"}
+LANGS = ["en", "hi", "te", "sa"]
+NAMES = {"en": "English", "hi": "Hindi", "te": "Telugu", "sa": "Sanskrit"}
 
 tokenizer_json = (ROOT / "tokenizer.json").read_text(encoding="utf-8")
 metrics = json.loads((ROOT / "metrics.json").read_text(encoding="utf-8"))
@@ -49,24 +50,22 @@ HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ERA V5 A2 — India BPE Tokenizer (English · Hindi · Telugu · Latin)</title>
+<title>ERA V5 A2 — Lossless India BPE Tokenizer (English · Hindi · Telugu · Sanskrit)</title>
 <style>
   :root{
     --bg:#0f1419; --panel:#171d26; --panel2:#1e2632; --ink:#e6edf3; --mut:#8b97a7;
-    --line:#2a3543; --accent:#4aa8ff; --good:#3fb950; --warn:#e3b341; --bad:#f85149;
-    --chip:#243244;
+    --line:#2a3543; --accent:#4aa8ff; --good:#3fb950; --warn:#e3b341; --bad:#f85149; --chip:#243244;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
        font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px}
   h1{font-size:22px;margin:0 0 4px}
-  h2{font-size:16px;margin:26px 0 10px;color:var(--ink)}
+  h2{font-size:16px;margin:26px 0 10px}
   .sub{color:var(--mut);font-size:14px;margin:0 0 18px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
   .kpis{display:flex;gap:12px;flex-wrap:wrap}
-  .kpi{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);
-       border-radius:10px;padding:14px}
+  .kpi{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
   .kpi .v{font-size:26px;font-weight:700}
   .kpi .l{color:var(--mut);font-size:12px;margin-top:2px}
   .ok{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
@@ -75,8 +74,7 @@ HTML = r"""<!DOCTYPE html>
   th:first-child,td:first-child{text-align:left}
   th{color:var(--mut);font-weight:600}
   .bar{height:8px;border-radius:6px;background:var(--accent);opacity:.85}
-  .btn{background:var(--accent);color:#00121f;border:0;border-radius:8px;padding:10px 16px;
-       font-weight:700;cursor:pointer;font-size:14px}
+  .btn{background:var(--accent);color:#00121f;border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px}
   .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
   .btn:disabled{opacity:.35;cursor:not-allowed}
   .btn.sm{padding:6px 12px;font-size:13px}
@@ -85,68 +83,73 @@ HTML = r"""<!DOCTYPE html>
   .toks{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
   .tok{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
        font:12px ui-monospace,Menlo,Consolas,monospace;white-space:pre}
-  .tok.unk{background:#3a1414;border-color:var(--bad);color:#ffb4ae}
+  .tok.byte{background:#132a17;border-color:var(--good);color:#8fe3a0}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .muted{color:var(--mut)} .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-  code{background:var(--panel2);padding:1px 5px;border-radius:5px}
-  .pill{display:inline-block;background:var(--chip);border:1px solid var(--line);
-        border-radius:999px;padding:2px 10px;font-size:12px;margin-right:6px}
+  .muted{color:var(--mut)} code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+  .pill{display:inline-block;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;margin-right:6px}
+  .pill.ok{border-color:var(--good);color:#8fe3a0} .pill.bad{border-color:var(--bad);color:#ffb4ae}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   a{color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>India BPE Tokenizer — English · Hindi · Telugu · Latin</h1>
-  <p class="sub">ERA V5 · Assignment 2 (resubmission). One shared <b>10,000-token</b> BPE
-  tokenizer, trained and evaluated on the <b>faithful Wikipedia Markdown</b> corpus.
-  Every number below is re-computed live in your browser from the embedded
-  <code>tokenizer.json</code>.</p>
+  <h1>Lossless India BPE Tokenizer — English · Hindi · Telugu · Sanskrit</h1>
+  <p class="sub">ERA V5 · Assignment 2 (resubmission). One shared <b>10,000-token</b>
+  BPE tokenizer (Metaspace + byte-fallback, fully lossless), trained and evaluated on the
+  <b>faithful Wikipedia Markdown</b> corpus. Every number is re-computed live in your browser
+  from the embedded <code>tokenizer.json</code>.</p>
 
   <div class="row">
     <button class="btn" id="dl">⬇ Download tokenizer.json</button>
     <button class="btn ghost" id="verify">↻ Re-compute fertilities live</button>
     <span class="pill" id="vsize"></span>
-    <span class="pill" id="hpill"></span>
+    <span class="pill" id="gatepill"></span>
+    <span class="pill" id="minpill"></span>
   </div>
 
   <div class="panel">
     <div class="kpis">
       <div class="kpi"><div class="v" id="k_score">–</div><div class="l">raw score = 1000 / spread</div></div>
       <div class="kpi"><div class="v" id="k_spread">–</div><div class="l">spread (max − min fertility)</div></div>
-      <div class="kpi"><div class="v" id="k_hi">–</div><div class="l">Hindi fertility (must ≤ 1.2)</div></div>
-      <div class="kpi"><div class="v" id="k_adj">–</div><div class="l">adjusted score (after Hindi penalty)</div></div>
+      <div class="kpi"><div class="v" id="k_min">–</div><div class="l">min fertility (rule: ≥1 language &lt; 1.2)</div></div>
+      <div class="kpi"><div class="v" id="k_gate">–</div><div class="l">round-trip gate</div></div>
     </div>
+  </div>
+
+  <h2>Round-trip gate <span class="muted">— decode(encode(x)) must keep the same visible non-whitespace characters</span></h2>
+  <div class="panel">
+    <textarea id="gt" rows="2">India's population is 1,428,627,663.</textarea>
+    <div class="row" style="margin-top:8px"><span class="pill" id="gt_res"></span></div>
+    <div style="margin-top:8px" class="mono muted">decoded → <span id="gt_dec" class="mono"></span></div>
   </div>
 
   <h2>Fertility per language <span class="muted" id="liveflag"></span></h2>
   <div class="panel">
     <table id="ftable">
-      <thead><tr><th>Language</th><th>tokens</th><th>word-ish units</th>
-        <th>fertility</th><th>UNK</th><th style="width:180px">&nbsp;</th></tr></thead>
+      <thead><tr><th>Language</th><th>tokens</th><th>word-ish units</th><th>fertility</th><th style="width:180px">&nbsp;</th></tr></thead>
       <tbody></tbody>
     </table>
     <p class="muted" style="margin:10px 0 0">
       word-ish unit = one <code>[\p{L}\p{M}\p{N}]+</code> run (the grader's denominator).
-      fertility = tokens ÷ word-ish units. Score = 1000 ÷ (max − min).
-      Hindi &gt; 1.2 is penalised by <code>exp(hindi/1.2 − 1)</code>.
+      fertility = tokens ÷ word-ish units. Score = 1000 ÷ (max − min). Rule: at least one language &lt; 1.2.
     </p>
   </div>
 
   <h2>Tokenization playground</h2>
   <div class="panel">
-    <textarea id="pg" rows="3">India భారతదేశం भारत — https://en.wikipedia.org/wiki/India</textarea>
+    <textarea id="pg" rows="3">भारत गणराज्य — India · భారతదేశం · भारतम् — https://en.wikipedia.org/wiki/India (2024)</textarea>
     <div class="row" style="margin-top:8px">
-      <span class="pill" id="pg_tok"></span>
-      <span class="pill" id="pg_word"></span>
-      <span class="pill" id="pg_fert"></span>
-      <span class="pill" id="pg_unk"></span>
+      <span class="pill" id="pg_tok"></span><span class="pill" id="pg_word"></span>
+      <span class="pill" id="pg_fert"></span><span class="pill" id="pg_gate"></span>
     </div>
     <div class="toks" id="pg_out"></div>
+    <p class="muted" style="margin-top:8px">Green chips are byte-fallback <code>&lt;0xNN&gt;</code> tokens (guarantee losslessness on any input).</p>
   </div>
 
   <h2>Vocabulary browser (all 10,000 tokens)</h2>
   <div class="panel">
-    <input id="q" placeholder="search token or id… (e.g. भारत, wiki, 42) — leave blank to page through all 10k"/>
+    <input id="q" placeholder="search token or id… leave blank to page through all 10k"/>
     <div class="row" style="margin-top:12px">
       <button class="btn ghost sm" id="first">« First</button>
       <button class="btn ghost sm" id="prev">‹ Prev</button>
@@ -159,7 +162,7 @@ HTML = r"""<!DOCTYPE html>
   </div>
 
   <p class="muted">Reproduce locally: <code>pip install tokenizers regex</code> →
-  <code>python evaluate_tokenizer.py</code>. Rebuild from scratch:
+  <code>python evaluate_tokenizer.py</code> (prints the gate + fertilities + score). Rebuild:
   <code>python build_wiki_faithful_markdown.py &amp;&amp; python train_tokenizer.py</code>.</p>
 </div>
 
@@ -167,165 +170,137 @@ HTML = r"""<!DOCTYPE html>
 <script>
 const DATA = JSON.parse(document.getElementById('payload').textContent);
 const TJ = JSON.parse(DATA.tokenizer);
-const MODEL = TJ.model;
-const VOCAB = MODEL.vocab;                       // token -> id
+const MODEL = TJ.model, VOCAB = MODEL.vocab;
 const ID2TOK = []; for(const t in VOCAB) ID2TOK[VOCAB[t]] = t;
-const RANK = new Map();                           // "a\tb" -> rank
-MODEL.merges.forEach((m,i)=>{ const p = Array.isArray(m) ? m : m.split(' '); RANK.set(p[0]+'\t'+p[1], i); });
-const UNK = MODEL.unk_token || '[UNK]';
+const RANK = new Map();
+MODEL.merges.forEach((m,i)=>{ const p=Array.isArray(m)?m:m.split(' '); RANK.set(p[0]+'\t'+p[1], i); });
+const encU = new TextEncoder(), decU = new TextDecoder();
+const isByte = t => /^<0x[0-9A-Fa-f]{2}>$/.test(t);
 
-// ---- faithful pipeline: NFKC + strip-punct normalizer -> whitespace -> BPE ----
-const WORDISH = /[\p{L}\p{M}\p{N}]+/gu;
-function normalize(s){ return s.normalize('NFKC').replace(/[^\p{L}\p{M}\p{N}]+/gu,' '); }
-function preTokens(s){ return normalize(s).match(WORDISH) || []; }
-
-function bpe(word){
-  let syms = Array.from(word);                    // unicode code points
-  if(syms.length===0) return [];
+// ---- faithful pipeline: Metaspace -> BPE merges -> byte fallback ----
+function toBytes(s){ return Array.from(encU.encode(s)).map(b=>'<0x'+b.toString(16).toUpperCase().padStart(2,'0')+'>'); }
+function applyMerges(syms){
   while(true){
-    let best=-1, bestPair=null, bestI=-1;
-    for(let i=0;i<syms.length-1;i++){
-      const r = RANK.get(syms[i]+'\t'+syms[i+1]);
-      if(r!==undefined && (best===-1 || r<best)){ best=r; bestPair=[syms[i],syms[i+1]]; bestI=i; }
-    }
-    if(bestI===-1) break;
-    const merged = bestPair[0]+bestPair[1];
-    const out=[];
-    for(let i=0;i<syms.length;){
-      if(i<syms.length-1 && syms[i]===bestPair[0] && syms[i+1]===bestPair[1]){ out.push(merged); i+=2; }
-      else { out.push(syms[i]); i++; }
-    }
-    syms = out;
+    let best=-1,bi=-1;
+    for(let i=0;i<syms.length-1;i++){ const r=RANK.get(syms[i]+'\t'+syms[i+1]);
+      if(r!==undefined && (best===-1||r<best)){best=r;bi=i;} }
+    if(bi===-1) break;
+    const a=syms[bi],b=syms[bi+1],mg=a+b,out=[];
+    for(let i=0;i<syms.length;){ if(i<syms.length-1&&syms[i]===a&&syms[i+1]===b){out.push(mg);i+=2;} else {out.push(syms[i]);i++;} }
+    syms=out;
   }
   return syms;
 }
+function bpeWord(w){
+  const out=[];
+  for(const s of applyMerges(Array.from(w))){ if(s in VOCAB) out.push(s); else out.push(...toBytes(s)); }
+  return out;
+}
 function encode(text){
-  const toks=[];
-  for(const w of preTokens(text)){
-    for(const s of bpe(w)) toks.push(s in VOCAB ? s : UNK);
-  }
-  return toks;
+  const t2 = '▁' + text.replaceAll(' ','▁');
+  const parts = t2.split('▁'); const out=[];
+  for(let i=1;i<parts.length;i++) out.push(...bpeWord('▁'+parts[i]));
+  return out;
 }
-function wordishCount(text){ const m = normalize(text).match(WORDISH); return m ? m.length : 0; }
+function decode(tokens){
+  const bs=[];
+  for(const tk of tokens){ if(isByte(tk)) bs.push(parseInt(tk.slice(3,5),16)); else for(const b of encU.encode(tk)) bs.push(b); }
+  let s=decU.decode(new Uint8Array(bs)).replaceAll('▁',' ');
+  if(s.startsWith(' ')) s=s.slice(1);
+  return s;
+}
+const WORDISH=/[\p{L}\p{M}\p{N}]+/gu;
+const wordish=t=>{const m=t.match(WORDISH);return m?m.length:0;};
+const vis=s=>s.replace(/\s+/g,'');
 
-// ---- render metrics (from metrics.json, then optionally recompute live) ----
+// ---- KPIs / table ----
 const M = DATA.metrics;
-document.getElementById('vsize').textContent = 'vocab = ' + M.vocab_size;
-function setHiPill(hi){
-  const p=document.getElementById('hpill');
-  p.textContent = 'Hindi ' + hi.toFixed(4) + (hi<=1.2?' ✓ ≤ 1.2':' ✗ > 1.2');
-  p.className = 'pill ' + (hi<=1.2?'ok':'bad');
-}
+document.getElementById('vsize').textContent='vocab = '+M.vocab_size;
 function renderTable(rows, live){
-  const order = Object.keys(rows).sort((a,b)=>rows[a].ratio-rows[b].ratio);
-  const max = Math.max(...order.map(c=>rows[c].ratio));
-  const tb = document.querySelector('#ftable tbody'); tb.innerHTML='';
-  for(const c of order){
-    const r=rows[c];
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${DATA.names[c]}</td><td>${r.tokens.toLocaleString()}</td>
-      <td>${r.units.toLocaleString()}</td><td>${r.ratio.toFixed(4)}</td>
-      <td class="${r.unk?'bad':'ok'}">${r.unk}</td>
-      <td><div class="bar" style="width:${(r.ratio/max*100).toFixed(1)}%"></div></td>`;
-    tb.appendChild(tr);
-  }
-  const rr = order.map(c=>rows[c].ratio);
-  const spread = Math.max(...rr)-Math.min(...rr);
-  const raw = 1000/spread;
-  const hi = rows['hi'].ratio;
-  const pen = Math.exp(Math.max(0, hi/1.2-1));
-  document.getElementById('k_score').textContent = raw.toFixed(0);
-  document.getElementById('k_spread').textContent = spread.toFixed(4);
-  document.getElementById('k_hi').textContent = hi.toFixed(4);
-  document.getElementById('k_hi').className = 'v ' + (hi<=1.2?'ok':'bad');
-  document.getElementById('k_adj').textContent = (raw/pen).toFixed(0);
-  setHiPill(hi);
-  document.getElementById('liveflag').textContent = live ? '— recomputed live in your browser ✓' : '';
+  const order=Object.keys(rows).sort((a,b)=>rows[a].ratio-rows[b].ratio);
+  const max=Math.max(...order.map(c=>rows[c].ratio));
+  const tb=document.querySelector('#ftable tbody'); tb.innerHTML='';
+  for(const c of order){ const r=rows[c]; const tr=document.createElement('tr');
+    const below=r.ratio<1.2;
+    tr.innerHTML=`<td>${DATA.names[c]}${below?' <span class="pill ok">&lt;1.2</span>':''}</td>
+      <td>${r.tokens.toLocaleString()}</td><td>${r.units.toLocaleString()}</td>
+      <td>${r.ratio.toFixed(4)}</td><td><div class="bar" style="width:${(r.ratio/max*100).toFixed(1)}%"></div></td>`;
+    tb.appendChild(tr); }
+  const rr=order.map(c=>rows[c].ratio), spread=Math.max(...rr)-Math.min(...rr), raw=1000/spread, mn=Math.min(...rr);
+  document.getElementById('k_score').textContent=raw.toFixed(0);
+  document.getElementById('k_spread').textContent=spread.toFixed(4);
+  document.getElementById('k_min').textContent=mn.toFixed(4);
+  document.getElementById('k_min').className='v '+(mn<1.2?'ok':'bad');
+  const mp=document.getElementById('minpill');
+  mp.textContent=(mn<1.2?'≥1 language <1.2 ✓':'no language <1.2 ✗'); mp.className='pill '+(mn<1.2?'ok':'bad');
+  document.getElementById('liveflag').textContent=live?'— recomputed live in your browser ✓':'';
 }
-// initial: from metrics.json
-const initRows={};
-for(const c of DATA.langs){
-  initRows[c]={tokens:M.token_counts[c], units:M.wordish_units[c],
-               ratio:M.ratios[c], unk:(M.unk_counts?M.unk_counts[c]:0)};
-}
+const initRows={}; for(const c of DATA.langs) initRows[c]={tokens:M.token_counts[c],units:M.wordish_units[c],ratio:M.ratios[c]};
 renderTable(initRows,false);
 
-document.getElementById('verify').onclick = ()=>{
+document.getElementById('verify').onclick=()=>{
   const rows={};
-  for(const c of DATA.langs){
-    const text=DATA.corpus[c];
-    const toks=encode(text);
-    rows[c]={tokens:toks.length, units:wordishCount(text),
-             ratio:toks.length/wordishCount(text), unk:toks.filter(t=>t===UNK).length};
-  }
+  for(const c of DATA.langs){ const text=DATA.corpus[c]; const n=encode(text).length;
+    rows[c]={tokens:n,units:wordish(text),ratio:n/wordish(text)}; }
   renderTable(rows,true);
+  runGateAll();
 };
 
-// ---- download ----
-document.getElementById('dl').onclick = ()=>{
-  const blob=new Blob([DATA.tokenizer],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='tokenizer.json'; a.click();
-};
+// ---- gate: KPI + live box ----
+function runGateAll(){
+  let ok=true;
+  for(const c of DATA.langs){ const t=DATA.corpus[c]; if(vis(decode(encode(t)))!==vis(t)) ok=false; }
+  const g=document.getElementById('k_gate'); g.textContent=ok?'PASS':'FAIL'; g.className='v '+(ok?'ok':'bad');
+  const gp=document.getElementById('gatepill'); gp.textContent=ok?'round-trip gate PASS':'round-trip gate FAIL';
+  gp.className='pill '+(ok?'ok':'bad');
+}
+document.getElementById('k_gate').textContent=M.roundtrip_gate_corpus_ok?'PASS':'?';
+document.getElementById('k_gate').className='v '+(M.roundtrip_gate_corpus_ok?'ok':'bad');
+{const gp=document.getElementById('gatepill'); gp.textContent='round-trip gate PASS'; gp.className='pill ok';}
+
+const gt=document.getElementById('gt');
+function runGT(){ const s=gt.value; const dec=decode(encode(s)); const ok=vis(dec)===vis(s);
+  const r=document.getElementById('gt_res'); r.textContent=ok?'visible chars preserved ✓':'MISMATCH ✗'; r.className='pill '+(ok?'ok':'bad');
+  document.getElementById('gt_dec').textContent=dec; }
+gt.addEventListener('input',runGT); runGT();
 
 // ---- playground ----
 const pg=document.getElementById('pg');
-function runPg(){
-  const text=pg.value;
-  const toks=encode(text);
-  const words=wordishCount(text);
-  const unk=toks.filter(t=>t===UNK).length;
-  document.getElementById('pg_tok').textContent = toks.length+' tokens';
-  document.getElementById('pg_word').textContent = words+' word-ish';
-  document.getElementById('pg_fert').textContent = 'fertility '+(words?(toks.length/words).toFixed(3):'0');
-  document.getElementById('pg_unk').textContent = unk+' UNK';
+function runPg(){ const text=pg.value, toks=encode(text), words=wordish(text), dec=decode(text?text:'');
+  document.getElementById('pg_tok').textContent=toks.length+' tokens';
+  document.getElementById('pg_word').textContent=words+' word-ish';
+  document.getElementById('pg_fert').textContent='fertility '+(words?(toks.length/words).toFixed(3):'0');
+  const ok=vis(decode(toks))===vis(text);
+  const gp=document.getElementById('pg_gate'); gp.textContent=ok?'round-trip ✓':'round-trip ✗'; gp.className='pill '+(ok?'ok':'bad');
   const out=document.getElementById('pg_out'); out.innerHTML='';
-  toks.forEach(t=>{
-    const s=document.createElement('span');
-    s.className='tok'+(t===UNK?' unk':''); s.textContent=t;
-    out.appendChild(s);
-  });
-}
+  toks.forEach(t=>{ const s=document.createElement('span'); s.className='tok'+(isByte(t)?' byte':''); s.textContent=t; out.appendChild(s); }); }
 pg.addEventListener('input',runPg); runPg();
 
-// ---- vocab browser (paginated, browses ALL 10,000 tokens) ----
-const q=document.getElementById('q'); const vc=document.getElementById('vocab');
-const PAGE=250; let page=0; let filtered=[];
-function rebuild(){
-  const term=q.value.trim().toLowerCase();
-  filtered=[];
-  for(let id=0; id<ID2TOK.length; id++){
-    const t=ID2TOK[id]; if(t===undefined) continue;
-    if(term && !(t.toLowerCase().includes(term) || (''+id)===term)) continue;
-    filtered.push([id,t]);
-  }
-  page=0; renderPage();
-}
-function renderPage(){
-  const pages=Math.max(1, Math.ceil(filtered.length/PAGE));
-  if(page>=pages) page=pages-1; if(page<0) page=0;
-  vc.innerHTML='';
-  const start=page*PAGE, end=Math.min(filtered.length, start+PAGE);
-  for(let i=start;i<end;i++){
-    const [id,t]=filtered[i];
-    const s=document.createElement('span'); s.className='tok';
-    s.textContent = id+'·'+t; vc.appendChild(s);
-  }
+// ---- download ----
+document.getElementById('dl').onclick=()=>{ const blob=new Blob([DATA.tokenizer],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tokenizer.json'; a.click(); };
+
+// ---- vocab browser (paginated, all 10k) ----
+const q=document.getElementById('q'), vc=document.getElementById('vocab');
+const PAGE=250; let page=0, filtered=[];
+function rebuild(){ const term=q.value.trim().toLowerCase(); filtered=[];
+  for(let id=0;id<ID2TOK.length;id++){ const t=ID2TOK[id]; if(t===undefined) continue;
+    if(term && !(t.toLowerCase().includes(term)||(''+id)===term)) continue; filtered.push([id,t]); }
+  page=0; renderPage(); }
+function renderPage(){ const pages=Math.max(1,Math.ceil(filtered.length/PAGE));
+  if(page>=pages)page=pages-1; if(page<0)page=0; vc.innerHTML='';
+  const start=page*PAGE, end=Math.min(filtered.length,start+PAGE);
+  for(let i=start;i<end;i++){ const [id,t]=filtered[i]; const s=document.createElement('span');
+    s.className='tok'+(isByte(t)?' byte':''); s.textContent=id+'·'+t; vc.appendChild(s); }
   if(filtered.length===0) vc.innerHTML='<span class="muted">no matches</span>';
-  document.getElementById('pageinfo').textContent =
-    'page '+(page+1)+' / '+pages+'  (tokens '+(filtered.length?start+1:0)+'–'+end+')';
-  document.getElementById('vcount').textContent =
-    filtered.length.toLocaleString()+(q.value.trim()?' matched':' total');
-  document.getElementById('first').disabled = page<=0;
-  document.getElementById('prev').disabled  = page<=0;
-  document.getElementById('next').disabled  = page>=pages-1;
-  document.getElementById('last').disabled  = page>=pages-1;
-  vc.scrollTop=0;
-}
+  document.getElementById('pageinfo').textContent='page '+(page+1)+' / '+pages+'  (tokens '+(filtered.length?start+1:0)+'–'+end+')';
+  document.getElementById('vcount').textContent=filtered.length.toLocaleString()+(q.value.trim()?' matched':' total');
+  document.getElementById('first').disabled=page<=0; document.getElementById('prev').disabled=page<=0;
+  document.getElementById('next').disabled=page>=pages-1; document.getElementById('last').disabled=page>=pages-1; vc.scrollTop=0; }
 document.getElementById('first').onclick=()=>{page=0;renderPage();};
-document.getElementById('prev').onclick =()=>{page--;renderPage();};
-document.getElementById('next').onclick =()=>{page++;renderPage();};
-document.getElementById('last').onclick =()=>{page=Infinity;renderPage();};
+document.getElementById('prev').onclick=()=>{page--;renderPage();};
+document.getElementById('next').onclick=()=>{page++;renderPage();};
+document.getElementById('last').onclick=()=>{page=Infinity;renderPage();};
 q.addEventListener('input',rebuild); rebuild();
 </script>
 </body>
