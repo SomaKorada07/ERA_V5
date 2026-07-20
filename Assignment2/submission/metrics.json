@@ -1,49 +1,50 @@
 {
-  "variant": "wiki_faithful_markdown",
-  "fourth_language": "la",
+  "variant": "wiki_faithful_markdown_lossless",
+  "tokenizer": "Metaspace BPE + byte_fallback (lossless)",
+  "fourth_language": "sa",
   "languages": {
     "en": "English",
     "hi": "Hindi",
     "te": "Telugu",
-    "la": "Latin"
+    "sa": "Sanskrit"
   },
   "weights": {
-    "en": 3,
-    "hi": 8,
-    "te": 11,
-    "la": 7
+    "en": 2,
+    "hi": 6,
+    "te": 9,
+    "sa": 10
   },
   "vocab_size": 10000,
   "wordish_units": {
     "en": 89417,
     "hi": 42151,
     "te": 16109,
-    "la": 10569
+    "sa": 6720
   },
   "token_counts": {
-    "en": 117557,
-    "hi": 49930,
-    "te": 19385,
-    "la": 13587
+    "en": 130178,
+    "hi": 50068,
+    "te": 21997,
+    "sa": 9547
   },
   "unk_counts": {
     "en": 0,
     "hi": 0,
     "te": 0,
-    "la": 0
+    "sa": 0
   },
   "ratios": {
-    "en": 1.3147052573895344,
-    "hi": 1.1845507817133638,
-    "te": 1.203364578806878,
-    "la": 1.2855520862900938
+    "en": 1.4558529138754375,
+    "hi": 1.1878247253920429,
+    "te": 1.3655099633745111,
+    "sa": 1.4206845238095238
   },
   "min_lang": "hi",
+  "min_fertility": 1.1878247253920429,
   "max_lang": "en",
-  "spread": 0.13015447567617056,
-  "raw_score": 7683.177968370748,
-  "hindi_fertility": 1.1845507817133638,
-  "hindi_ok": true,
-  "hindi_penalty_factor": 1.0,
-  "adjusted_score": 7683.177968370748
+  "spread": 0.2680281884833946,
+  "raw_score": 3730.9508587823548,
+  "at_least_one_below_1.2": true,
+  "roundtrip_gate_samples_ok": true,
+  "roundtrip_gate_corpus_ok": true
 }

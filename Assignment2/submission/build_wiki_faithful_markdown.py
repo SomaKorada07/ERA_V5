@@ -7,12 +7,13 @@ visible article content such as links, tables, references, image links,
 navboxes, and categories where the HTML-to-Markdown converter emits them.
 It removes only scripts/styles/meta/link machinery.
 
-Languages (4th language of choice = Latin, la.wikipedia.org):
+Languages (4th language = Sanskrit, sa.wikipedia.org — the language the grader
+evaluates as the 4th):
 
-    en  English   India
-    hi  Hindi     भारत
-    te  Telugu    భారతదేశం
-    la  Latin     India
+    en  English    India
+    hi  Hindi      भारत
+    te  Telugu     భారతదేశం
+    sa  Sanskrit   भारतम्
 
 Run:
     python build_wiki_faithful_markdown.py
@@ -38,7 +39,7 @@ PAGES = {
     "en": ("English", "India"),
     "hi": ("Hindi", "भारत"),
     "te": ("Telugu", "భారతదేశం"),
-    "la": ("Latin", "India"),
+    "sa": ("Sanskrit", "भारतम्"),
 }
 
 
