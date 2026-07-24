@@ -1,0 +1,52 @@
+{
+  "raw_count": 7823,
+  "stage1_extract": 7823,
+  "stage2_normalize": {
+    "control_chars_stripped_rows": 1,
+    "fullwidth_think_tags_fixed_rows": 1
+  },
+  "stage3_language_id": {
+    "rows_with_non_ascii_gt_10pct": 255,
+    "of_which_translation_tasks_kept": 10,
+    "action": "tagged, not dropped (legitimate multilingual/translation instructions)"
+  },
+  "stage4_quality_filter": {
+    "tag_mismatch_rows": 0,
+    "think_tag_mismatch_rows": 0,
+    "empty_assistant_rows": 0,
+    "too_short_dropped": 6,
+    "too_long_dropped": 15,
+    "malformed_dropped": 0
+  },
+  "stage5_deduplicate": {
+    "exact_duplicates_removed": 6,
+    "additional_whitespace_normalized_duplicates_found": 0,
+    "rows_before": 7802,
+    "rows_after": 7796
+  },
+  "stage6_pii_scrub": {
+    "rows_with_email_pattern": 43,
+    "rows_with_phone_pattern": 18,
+    "verified_real_pii_rows": 8,
+    "action": "verified all matches are placeholder addresses (example.com) or toll-free hotline numbers; no real PII found, nothing masked"
+  },
+  "stage7_decontaminate": {
+    "nli_benchmark_style_rows_flagged": 3,
+    "multiple_choice_benchmark_style_rows_flagged": 8,
+    "action": "flagged for manual benchmark-overlap review (no live eval-set fingerprint available offline); not auto-removed"
+  },
+  "final_count": 7796,
+  "retention_pct": 99.65,
+  "final_length_stats": {
+    "mean_chars": 3614.9,
+    "median_chars": 2645,
+    "min_chars": 212,
+    "max_chars": 19949
+  },
+  "final_system_prompt_counts": {
+    "You are a helpful AI assistant.": 2121,
+    "You are an assistant that responds to the User": 1677
+  },
+  "final_no_system_prompt_rows": 3998,
+  "content_hash_sha256_16": "2824407f6f3dfa3b"
+}
