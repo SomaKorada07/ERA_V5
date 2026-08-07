@@ -1,0 +1,72 @@
+{
+  "blocked_events": [
+    {
+      "content_hash": "c0beaa6eb89a5be2",
+      "event": "eval_shard_blocked",
+      "reason": "matches registered eval/test fingerprint",
+      "shard_id": "shard::general_web::eval::16060968ff09"
+    },
+    {
+      "content_hash": "42c7f4f0492a0cda",
+      "event": "eval_shard_blocked",
+      "reason": "matches registered eval/test fingerprint",
+      "shard_id": "shard::indic::eval::bf73989ce298"
+    },
+    {
+      "content_hash": "7d9640c1dbf2567a",
+      "event": "eval_shard_blocked",
+      "reason": "matches registered eval/test fingerprint",
+      "shard_id": "shard::agentic::eval::9d44caae0850"
+    }
+  ],
+  "registry": [
+    {
+      "benchmark_id": "MMLU",
+      "content_hash": "c0beaa6eb89a5be2",
+      "kind": "test",
+      "never_train": true,
+      "read_for_eval": true,
+      "shard_id": "shard::general_web::eval::16060968ff09"
+    },
+    {
+      "benchmark_id": "MILU",
+      "content_hash": "42c7f4f0492a0cda",
+      "kind": "test",
+      "never_train": true,
+      "read_for_eval": true,
+      "shard_id": "shard::indic::eval::bf73989ce298"
+    },
+    {
+      "benchmark_id": "BFCL",
+      "content_hash": "7d9640c1dbf2567a",
+      "kind": "test",
+      "never_train": true,
+      "read_for_eval": true,
+      "shard_id": "shard::agentic::eval::9d44caae0850"
+    },
+    {
+      "benchmark_id": "VAL::general_web",
+      "content_hash": "a327dfdddac0c7c2",
+      "kind": "validation",
+      "never_train": false,
+      "read_for_eval": true,
+      "shard_id": "shard::general_web::val::16a7f921ff07"
+    },
+    {
+      "benchmark_id": "VAL::code",
+      "content_hash": "460d1357822f6f31",
+      "kind": "validation",
+      "never_train": false,
+      "read_for_eval": true,
+      "shard_id": "shard::code::val::f27752015e14"
+    },
+    {
+      "benchmark_id": "VAL::indic",
+      "content_hash": "d0a1eaf46c4a694d",
+      "kind": "validation",
+      "never_train": false,
+      "read_for_eval": true,
+      "shard_id": "shard::indic::val::22b9614221cb"
+    }
+  ]
+}

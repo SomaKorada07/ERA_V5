@@ -1,0 +1,23 @@
+{
+  "curriculum_stages": [
+    "code_stem_ramp"
+  ],
+  "influencing_shards": [
+    "shard::agentic::train::499255b0fbef",
+    "shard::code::train::0f2bd35da7bc",
+    "shard::general_web::train::59ab8c8b9415",
+    "shard::indic::train::d2611838dd9c",
+    "shard::math_science::train::809c9fd04acd",
+    "shard::reasoning::train::743cd6975049"
+  ],
+  "influencing_steps": [
+    10,
+    11,
+    12,
+    13
+  ],
+  "query_token_range": [
+    5120,
+    7168
+  ]
+}

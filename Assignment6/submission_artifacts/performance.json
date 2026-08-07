@@ -1,0 +1,50 @@
+{
+  "accepted_tokens_per_sec": 6322631.8,
+  "loss_bearing_utilization": 0.6323,
+  "mixture_compliance": {
+    "accepted_share": {
+      "agentic": 0.1626,
+      "code": 0.1429,
+      "general_web": 0.2463,
+      "indic": 0.1823,
+      "math_science": 0.0887,
+      "reasoning": 0.1773
+    },
+    "all_floors_respected": true,
+    "planned_share": {
+      "agentic": 0.1289,
+      "code": 0.2031,
+      "general_web": 0.2734,
+      "indic": 0.1445,
+      "math_science": 0.1094,
+      "reasoning": 0.1406
+    },
+    "protected_floor_respected": {
+      "agentic": true,
+      "indic": true,
+      "reasoning": true
+    },
+    "protected_min_floor": {
+      "agentic": 0.02,
+      "indic": 0.12,
+      "reasoning": 0.05
+    }
+  },
+  "packing_utilization": 0.9777,
+  "padding_tokens": 365,
+  "pre_opus_loss_tokens": 14047,
+  "raw_tokens": 16019,
+  "raw_tokens_per_sec": 9777221.7,
+  "rejection_rate_by_lane": {
+    "agentic": 0.0,
+    "code": 0.2115,
+    "general_web": 0.0571,
+    "indic": 0.0,
+    "math_science": 0.1786,
+    "reasoning": 0.0
+  },
+  "sim_time_seconds": 0.001638,
+  "total_positions": 16384,
+  "useful_loss_tokens_after_opus": 10359,
+  "useful_tokens_per_sec": 6322631.8
+}

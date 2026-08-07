@@ -1,0 +1,33 @@
+{
+  "capability_lane": "agentic",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "clean",
+  "content_hash": "7bc93a73790b4775",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "15ff0d5457c98d01",
+    "1992108b4f8a231d",
+    "44982a139fe52ae5",
+    "470e18544e5ecc87",
+    "6480faac835c3cb8",
+    "840fefa3776e4f56",
+    "8927e18189d2c7d8",
+    "efec3f0bf31310b4"
+  ],
+  "eval_overlap": false,
+  "lane": "agentic",
+  "language": "en",
+  "license_tier": "cc-by",
+  "loss_token_count": 124,
+  "parent_shard_ids": [],
+  "provenance_tier": "A",
+  "script": "latin",
+  "shard_id": "shard::agentic::train::499255b0fbef",
+  "source_ids": [
+    "src::agentic::train"
+  ],
+  "split": "train",
+  "token_count": 238,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

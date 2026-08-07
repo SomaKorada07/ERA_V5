@@ -1,0 +1,35 @@
+{
+  "capability_lane": "reasoning",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "clean",
+  "content_hash": "c6bfa1a00b9e384b",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "117a58e72b3ad3c7",
+    "204767a13cbc4eaa",
+    "248ce33818b4439f",
+    "9b9e7d85e570a535",
+    "a5173206d356107e",
+    "ad06ffac388cd1ac",
+    "bafa0d5c37923e6f",
+    "c284b82094947626",
+    "d8cfe3f8e19accc2",
+    "ea8f770d2f5abec8"
+  ],
+  "eval_overlap": false,
+  "lane": "reasoning",
+  "language": "en",
+  "license_tier": "cc-by",
+  "loss_token_count": 121,
+  "parent_shard_ids": [],
+  "provenance_tier": "B",
+  "script": "latin",
+  "shard_id": "shard::reasoning::train::743cd6975049",
+  "source_ids": [
+    "src::reasoning::train"
+  ],
+  "split": "train",
+  "token_count": 174,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

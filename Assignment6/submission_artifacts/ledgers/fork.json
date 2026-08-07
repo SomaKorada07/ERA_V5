@@ -1,0 +1,9 @@
+{
+  "branch_id": "fork::indic-heavy",
+  "branch_started_at_step": 24,
+  "data_divergence_step": 26,
+  "fork_batch_hash_at_divergence": "a05edce63c1c13cc",
+  "fork_events_recorded": 8,
+  "main_batch_hash_at_divergence": "9e67238482bf6ae1",
+  "parent_checkpoint": "ckpt::main::step24::487ecf82286a"
+}

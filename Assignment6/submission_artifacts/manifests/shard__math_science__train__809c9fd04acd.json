@@ -1,0 +1,41 @@
+{
+  "capability_lane": "math_science",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "clean",
+  "content_hash": "2d3604f96be982d9",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "0206a2586e807c0a",
+    "0a7512ff09accc4d",
+    "13a56d0dc6ed9e2c",
+    "1eea399b958aa88e",
+    "2c02bfc428239257",
+    "2da3d29c0b6cb962",
+    "3aae56b2c7bf786d",
+    "3ff867ea4bab383e",
+    "4cc4d4fb82b63707",
+    "55dc887d505cb303",
+    "707ce55ab1f9ff66",
+    "84bd5c736f8df1e3",
+    "9e31f20f798a2614",
+    "c33675e91991c0cf",
+    "c5c22604874ef74c",
+    "f95987d868f88432"
+  ],
+  "eval_overlap": false,
+  "lane": "math_science",
+  "language": "en",
+  "license_tier": "cc-by",
+  "loss_token_count": 459,
+  "parent_shard_ids": [],
+  "provenance_tier": "B",
+  "script": "latin",
+  "shard_id": "shard::math_science::train::809c9fd04acd",
+  "source_ids": [
+    "src::math_science::train"
+  ],
+  "split": "train",
+  "token_count": 475,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

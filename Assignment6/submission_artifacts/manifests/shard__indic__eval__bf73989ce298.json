@@ -1,0 +1,27 @@
+{
+  "capability_lane": "indic",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "held_out",
+  "content_hash": "42c7f4f0492a0cda",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "a97ec2bf3018505c",
+    "c42d76b92614f256"
+  ],
+  "eval_overlap": true,
+  "lane": "indic",
+  "language": "hi",
+  "license_tier": "eval-only",
+  "loss_token_count": 40,
+  "parent_shard_ids": [],
+  "provenance_tier": "A",
+  "script": "deva",
+  "shard_id": "shard::indic::eval::bf73989ce298",
+  "source_ids": [
+    "src::indic::eval"
+  ],
+  "split": "eval",
+  "token_count": 42,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

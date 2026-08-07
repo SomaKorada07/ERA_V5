@@ -1,0 +1,459 @@
+{
+  "scarcity": {
+    "agentic": {
+      "action": "repeat",
+      "demand": 2112,
+      "repetition_factor": 8.874,
+      "supply": 238
+    },
+    "code": {
+      "action": "repeat",
+      "demand": 3328,
+      "repetition_factor": 6.118,
+      "supply": 544
+    },
+    "general_web": {
+      "action": "repeat",
+      "demand": 4480,
+      "repetition_factor": 6.521,
+      "supply": 687
+    },
+    "indic": {
+      "action": "repeat",
+      "demand": 2368,
+      "repetition_factor": 12.02,
+      "supply": 197
+    },
+    "math_science": {
+      "action": "repeat",
+      "demand": 1792,
+      "repetition_factor": 3.773,
+      "supply": 475
+    },
+    "reasoning": {
+      "action": "repeat",
+      "demand": 2304,
+      "repetition_factor": 13.241,
+      "supply": 174
+    }
+  },
+  "timeline": [
+    {
+      "anneal_reserve": false,
+      "lane_plan": [
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "code",
+          "code",
+          "code",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ]
+      ],
+      "mixture": {
+        "agentic": 0.03,
+        "code": 0.15,
+        "general_web": 0.55,
+        "indic": 0.12,
+        "math_science": 0.1,
+        "reasoning": 0.05
+      },
+      "n_global_batches": 8,
+      "protected_floors": {
+        "agentic": 0.02,
+        "indic": 0.12,
+        "reasoning": 0.05
+      },
+      "sequence_length": 64,
+      "stage": "general",
+      "token_end": 4096,
+      "token_start": 0,
+      "warmup_batches": 2
+    },
+    {
+      "anneal_reserve": false,
+      "lane_plan": [
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "math_science",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "code",
+          "code",
+          "code",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "indic",
+          "math_science",
+          "math_science",
+          "math_science",
+          "math_science",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "code",
+          "code",
+          "code",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "general_web",
+          "indic",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "code",
+          "code",
+          "code",
+          "indic",
+          "reasoning"
+        ]
+      ],
+      "mixture": {
+        "agentic": 0.04,
+        "code": 0.28,
+        "general_web": 0.3,
+        "indic": 0.12,
+        "math_science": 0.18,
+        "reasoning": 0.08
+      },
+      "n_global_batches": 10,
+      "protected_floors": {
+        "agentic": 0.02,
+        "indic": 0.12,
+        "reasoning": 0.05
+      },
+      "sequence_length": 64,
+      "stage": "code_stem_ramp",
+      "token_end": 9216,
+      "token_start": 4096,
+      "warmup_batches": 2
+    },
+    {
+      "anneal_reserve": false,
+      "lane_plan": [
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "indic",
+          "math_science",
+          "math_science",
+          "reasoning",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "indic",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ]
+      ],
+      "mixture": {
+        "agentic": 0.08,
+        "code": 0.22,
+        "general_web": 0.22,
+        "indic": 0.14,
+        "math_science": 0.18,
+        "reasoning": 0.16
+      },
+      "n_global_batches": 8,
+      "protected_floors": {
+        "agentic": 0.05,
+        "indic": 0.12,
+        "reasoning": 0.1
+      },
+      "sequence_length": 64,
+      "stage": "reasoning_midtrain",
+      "token_end": 13312,
+      "token_start": 9216,
+      "warmup_batches": 1
+    },
+    {
+      "anneal_reserve": true,
+      "lane_plan": [
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "indic",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "indic",
+          "math_science",
+          "math_science",
+          "reasoning",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "indic",
+          "indic",
+          "math_science",
+          "reasoning",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "indic",
+          "math_science",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "general_web",
+          "indic",
+          "indic",
+          "math_science",
+          "reasoning",
+          "reasoning"
+        ],
+        [
+          "agentic",
+          "code",
+          "code",
+          "general_web",
+          "indic",
+          "indic",
+          "math_science",
+          "reasoning"
+        ]
+      ],
+      "mixture": {
+        "agentic": 0.15,
+        "code": 0.2,
+        "general_web": 0.1,
+        "indic": 0.2,
+        "math_science": 0.15,
+        "reasoning": 0.2
+      },
+      "n_global_batches": 6,
+      "protected_floors": {
+        "agentic": 0.1,
+        "indic": 0.15,
+        "reasoning": 0.15
+      },
+      "sequence_length": 64,
+      "stage": "anneal",
+      "token_end": 16384,
+      "token_start": 13312,
+      "warmup_batches": 1
+    }
+  ],
+  "total_tokens": 16384
+}

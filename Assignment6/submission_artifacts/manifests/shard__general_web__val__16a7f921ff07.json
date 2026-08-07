@@ -1,0 +1,27 @@
+{
+  "capability_lane": "general_web",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "held_out",
+  "content_hash": "a327dfdddac0c7c2",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "a87d08250d064079",
+    "b65d15d32d30d117"
+  ],
+  "eval_overlap": false,
+  "lane": "general_web",
+  "language": "en",
+  "license_tier": "eval-only",
+  "loss_token_count": 48,
+  "parent_shard_ids": [],
+  "provenance_tier": "B",
+  "script": "latin",
+  "shard_id": "shard::general_web::val::16a7f921ff07",
+  "source_ids": [
+    "src::general_web::val"
+  ],
+  "split": "val",
+  "token_count": 50,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

@@ -1,0 +1,39 @@
+[INFO] config: Config(seed=20250607, tokenizer_version='v5-tok-1', cleaning_pipeline_version='clean-v4.2', dataloader_version='loader-v6.0', proxy_version='opus-proxy-v5', seq_len=64, n_gpus=2, microbatch=2, grad_accum=2, checkpoint_every=4, opus_accept_fraction=0.6, opus_defer_band=0.15, model_smoothing_k=0.5, sec_per_position=1e-07)
+[STEP] building frozen tokenizer
+[PASS] tokenizer_hash_verified  (hash=691ae19b680d52a2 vocab=100)
+[STEP] generating corpus and tokenizing shards
+[PASS] shards_immutable_content_hash  (content_hash=66de8aab1bb0a9aa)
+[PASS] manifests_validated  (train_admitted=6/6 eval_rejected=3/3)
+[INFO] admission blocked shard::general_web::eval::16060968ff09: eval overlap
+[INFO] admission blocked shard::indic::eval::bf73989ce298: eval overlap
+[INFO] admission blocked shard::agentic::eval::9d44caae0850: eval overlap
+[STEP] registering eval/validation shards in the firewall
+[PASS] eval_shard_blocked  (blocked 3 eval shards; train shards pass)
+[STEP] compiling mixture timeline
+[PASS] mixture_stages_valid  (4 stages, 0 problems)
+[INFO] scarcity flags (repeat/synthesize): ['general_web', 'code', 'math_science', 'indic', 'reasoning', 'agentic']
+[STEP] building deterministic candidate plan + OPUS selection
+[PASS] packing_masks_valid  (32 batches, 256 sequences, 0 errors)
+[PASS] loss_mask_correctness  (context spans (obs/user) carry zero loss; pad carries zero loss)
+[PASS] opus_audit_trail  ({'accepted': 203, 'rejected': 20, 'deferred': 33, 'protected_override': 57})
+[STEP] training main run with checkpoints
+[PASS] consumption_ledger_complete  (32 events for 32 steps)
+[PASS] learning_ledger_linked  (32 learning events linked to consumption)
+[PASS] checkpoint_saved  (8 checkpoints, cadence=4)
+[PASS] eval_firewall_no_leak  (all consumed shards are admitted train shards)
+[PASS] model_learns  (loss 4.6052 -> 2.3026 after repeated exposure)
+[STEP] crash / resume drill
+[INFO] simulated crash at step 9 (status=crash)
+[INFO] last durable checkpoint: ckpt::recover::step8::a17740026646 (next_batch_index=8)
+[PASS] resume_next_batch_matched  (step 8 batch_hash 25d909cffc5638a2 matches original)
+[PASS] no_skip_or_repeat  (32 contiguous steps, hashes identical to original)
+[STEP] replay drill (reconstruct an earlier interval)
+[PASS] replay_hash_matched  (interval [8,12) batch hashes, sample ids and spans match original)
+[STEP] fork drill (new data branch from a checkpoint)
+[PASS] fork_branch_diverged  (prefix identical, diverges at step 26, new branch id recorded)
+[STEP] audit (which shards trained a token range)
+[PASS] audit_reconstructed  (range influenced steps [10, 11, 12, 13] from 6 shards)
+[STEP] measuring throughput / packing efficiency
+[PASS] throughput_reconstructable  (packing_util=0.9777 useful_tok/s=6322631.8)
+[PASS] protected_floor_respected  (floors={'agentic': True, 'indic': True, 'reasoning': True})
+[STEP] DEMO COMPLETE — 20/20 checks passed; all_requirements_passed=True

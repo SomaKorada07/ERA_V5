@@ -1,0 +1,43 @@
+{
+  "capability_lane": "code",
+  "cleaning_pipeline_hash": "f9f17d6cba4af26c",
+  "contamination_status": "clean",
+  "content_hash": "1a36c5119632bb1d",
+  "dedup_status": "deduplicated",
+  "document_ids": [
+    "0cce9c413b1f6acb",
+    "11c468dd8829fa80",
+    "1373b95273f17679",
+    "14d696c7d8b49ce2",
+    "235f5073de4ee5c8",
+    "49b0c3901bdde448",
+    "4cc82c59447ef3a6",
+    "585c6f779c8698ae",
+    "88fef66cae2835ff",
+    "8e8cf644763f71a7",
+    "9d6c0cb4ae3a010d",
+    "a1f631a00fad6995",
+    "b42aac61a62f230b",
+    "cdbdb9bafd49b5eb",
+    "d0287b102257538a",
+    "d3a4275bcd0d0eeb",
+    "da1b528b05a029c1",
+    "f37bbea858deeffc"
+  ],
+  "eval_overlap": false,
+  "lane": "code",
+  "language": "en",
+  "license_tier": "cc-by",
+  "loss_token_count": 526,
+  "parent_shard_ids": [],
+  "provenance_tier": "B",
+  "script": "latin",
+  "shard_id": "shard::code::train::0f2bd35da7bc",
+  "source_ids": [
+    "src::code::train"
+  ],
+  "split": "train",
+  "token_count": 544,
+  "tokenizer_hash": "691ae19b680d52a2",
+  "tokenizer_version": "v5-tok-1"
+}

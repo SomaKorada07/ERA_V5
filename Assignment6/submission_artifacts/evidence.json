@@ -1,0 +1,166 @@
+{
+  "artifacts": {
+    "checkpoints": 8,
+    "eval_shards_blocked": 3,
+    "final_avg_loss": 2.441041,
+    "first_avg_loss": 4.349766,
+    "opus": {
+      "accepted": 203,
+      "deferred": 33,
+      "protected_override": 57,
+      "rejected": 20
+    },
+    "run_id": "run::42ce2069111e48a8",
+    "total_optimizer_steps": 32,
+    "train_shards": 6
+  },
+  "checks": {
+    "audit_reconstructed": true,
+    "checkpoint_saved": true,
+    "consumption_ledger_complete": true,
+    "eval_firewall_no_leak": true,
+    "eval_shard_blocked": true,
+    "fork_branch_diverged": true,
+    "learning_ledger_linked": true,
+    "loss_mask_correctness": true,
+    "manifests_validated": true,
+    "mixture_stages_valid": true,
+    "model_learns": true,
+    "no_skip_or_repeat": true,
+    "opus_audit_trail": true,
+    "packing_masks_valid": true,
+    "protected_floor_respected": true,
+    "replay_hash_matched": true,
+    "resume_next_batch_matched": true,
+    "shards_immutable_content_hash": true,
+    "throughput_reconstructable": true,
+    "tokenizer_hash_verified": true
+  },
+  "requirements": [
+    {
+      "check_key": "tokenizer_hash_verified",
+      "evidence": "manifests/*.json (tokenizer_hash)",
+      "requirement": "Tokenizer integrity",
+      "result": "PASS"
+    },
+    {
+      "check_key": "shards_immutable_content_hash",
+      "evidence": "manifests/*.json (content_hash)",
+      "requirement": "Shard immutability",
+      "result": "PASS"
+    },
+    {
+      "check_key": "manifests_validated",
+      "evidence": "run.log admission events",
+      "requirement": "Manifest admission",
+      "result": "PASS"
+    },
+    {
+      "check_key": "eval_shard_blocked",
+      "evidence": "ledgers/firewall.json blocked events",
+      "requirement": "Evaluation firewall",
+      "result": "PASS"
+    },
+    {
+      "check_key": "eval_firewall_no_leak",
+      "evidence": "ledgers/consumption.jsonl shard_ids",
+      "requirement": "Firewall no-leak",
+      "result": "PASS"
+    },
+    {
+      "check_key": "mixture_stages_valid",
+      "evidence": "manifests/mixture_timeline.json",
+      "requirement": "Mixture schedule",
+      "result": "PASS"
+    },
+    {
+      "check_key": "protected_floor_respected",
+      "evidence": "performance.json mixture_compliance",
+      "requirement": "Mixture compliance",
+      "result": "PASS"
+    },
+    {
+      "check_key": "packing_masks_valid",
+      "evidence": "packed-sequence validation",
+      "requirement": "Packing correctness",
+      "result": "PASS"
+    },
+    {
+      "check_key": "loss_mask_correctness",
+      "evidence": "packed-sequence validation",
+      "requirement": "Loss/attention/pos ids",
+      "result": "PASS"
+    },
+    {
+      "check_key": "opus_audit_trail",
+      "evidence": "ledgers/opus.jsonl",
+      "requirement": "OPUS audit trail",
+      "result": "PASS"
+    },
+    {
+      "check_key": "consumption_ledger_complete",
+      "evidence": "ledgers/consumption.jsonl",
+      "requirement": "Consumption ledger",
+      "result": "PASS"
+    },
+    {
+      "check_key": "learning_ledger_linked",
+      "evidence": "ledgers/learning.jsonl",
+      "requirement": "Learning ledger",
+      "result": "PASS"
+    },
+    {
+      "check_key": "model_learns",
+      "evidence": "ledgers/learning.jsonl",
+      "requirement": "Model learns",
+      "result": "PASS"
+    },
+    {
+      "check_key": "checkpoint_saved",
+      "evidence": "checkpoints/*.json",
+      "requirement": "Checkpoint saved",
+      "result": "PASS"
+    },
+    {
+      "check_key": "resume_next_batch_matched",
+      "evidence": "run.log resume events",
+      "requirement": "Crash recovery",
+      "result": "PASS"
+    },
+    {
+      "check_key": "no_skip_or_repeat",
+      "evidence": "ledgers/consumption.jsonl",
+      "requirement": "No skip/repeat",
+      "result": "PASS"
+    },
+    {
+      "check_key": "replay_hash_matched",
+      "evidence": "run.log replay events",
+      "requirement": "Replay",
+      "result": "PASS"
+    },
+    {
+      "check_key": "fork_branch_diverged",
+      "evidence": "ledgers/fork.json",
+      "requirement": "Fork",
+      "result": "PASS"
+    },
+    {
+      "check_key": "audit_reconstructed",
+      "evidence": "ledgers/audit.json",
+      "requirement": "Audit",
+      "result": "PASS"
+    },
+    {
+      "check_key": "throughput_reconstructable",
+      "evidence": "performance.json",
+      "requirement": "Throughput",
+      "result": "PASS"
+    }
+  ],
+  "summary": {
+    "all_requirements_passed": true,
+    "checks_passed": 20,
+    "checks_run": 20
+  }
+}
