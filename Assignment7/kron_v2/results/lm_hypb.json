@@ -1,0 +1,176 @@
+{
+  "device": "mps",
+  "vocab": 52,
+  "block": 12,
+  "n_components": 12,
+  "codebook_free_validity": {
+    "mixture": 0.825,
+    "hyp_a_independent": 0.025
+  },
+  "generations": [
+    {
+      "prompt": "the quick fox",
+      "mixture_snap": "builds each scholar while the gentle machine follows the lantern",
+      "mixture_free": "builds each scholar whiled the  machine follows the lanternr",
+      "hypA_codebook": "beside each harbor each beside every lantern each gentle signal",
+      "hypA_free": "wu ev lagtnre e qeelon ehet lacbel eher celtow spcnnr"
+    },
+    {
+      "prompt": "a silent river",
+      "mixture_snap": "watches a signal the golden sparrow carries a lantern each",
+      "mixture_free": "watches a signal the fol sparrow carries a lanternr each",
+      "hypA_codebook": "the hollow fox guards the lantern but the lantern builds",
+      "hypA_free": "m wrscyrt moheern belroee a qairlnw autr aaerh miaide rueltvs"
+    },
+    {
+      "prompt": "the ancient kingdom",
+      "mixture_snap": "a ancient lantern follows each fox while another golden engine",
+      "mixture_free": "a ancient lanternr follows each fox whiled another fol engine",
+      "hypA_codebook": "and the golden signal carries every harbor the hollow signal",
+      "hypA_free": "aealhwe tvch holie loa roiruins ev raun b rineaea earola"
+    }
+  ],
+  "component_analysis": [
+    {
+      "prompt": "the",
+      "components": [
+        {
+          "word": "gentle",
+          "free": "",
+          "pi": 0.175
+        },
+        {
+          "word": "lantern",
+          "free": "canver",
+          "pi": 0.125
+        },
+        {
+          "word": "golden",
+          "free": "fol",
+          "pi": 0.118
+        },
+        {
+          "word": "quick",
+          "free": "quickus",
+          "pi": 0.089
+        },
+        {
+          "word": "silent",
+          "free": "silent",
+          "pi": 0.088
+        },
+        {
+          "word": "ancient",
+          "free": "ancient",
+          "pi": 0.082
+        }
+      ]
+    },
+    {
+      "prompt": "the quick",
+      "components": [
+        {
+          "word": "lantern",
+          "free": "lanternr",
+          "pi": 0.131
+        },
+        {
+          "word": "fox",
+          "free": "fox",
+          "pi": 0.094
+        },
+        {
+          "word": "machine",
+          "free": "machine",
+          "pi": 0.087
+        },
+        {
+          "word": "scholar",
+          "free": "scholar",
+          "pi": 0.087
+        },
+        {
+          "word": "harbor",
+          "free": "harbor",
+          "pi": 0.086
+        },
+        {
+          "word": "signal",
+          "free": "signal",
+          "pi": 0.084
+        }
+      ]
+    },
+    {
+      "prompt": "a silent fox",
+      "components": [
+        {
+          "word": "a",
+          "free": "a",
+          "pi": 0.107
+        },
+        {
+          "word": "another",
+          "free": "another",
+          "pi": 0.094
+        },
+        {
+          "word": "the",
+          "free": "thestions",
+          "pi": 0.094
+        },
+        {
+          "word": "measures",
+          "free": "measures",
+          "pi": 0.086
+        },
+        {
+          "word": "each",
+          "free": "eachies",
+          "pi": 0.085
+        },
+        {
+          "word": "discovers",
+          "free": "biscovers",
+          "pi": 0.084
+        }
+      ]
+    },
+    {
+      "prompt": "the ancient river",
+      "components": [
+        {
+          "word": "a",
+          "free": "a",
+          "pi": 0.113
+        },
+        {
+          "word": "questions",
+          "free": "thestions",
+          "pi": 0.098
+        },
+        {
+          "word": "carries",
+          "free": "eachies",
+          "pi": 0.097
+        },
+        {
+          "word": "crosses",
+          "free": "crosses",
+          "pi": 0.093
+        },
+        {
+          "word": "measures",
+          "free": "measures",
+          "pi": 0.092
+        },
+        {
+          "word": "discovers",
+          "free": "discovers",
+          "pi": 0.081
+        }
+      ]
+    }
+  ],
+  "note": "Mixture samples a component then decodes it in codec space -> coherent words even codebook-free. Hyp A's codebook-free decode samples byte positions independently -> blends. Both are O(1) in |V|."
+}

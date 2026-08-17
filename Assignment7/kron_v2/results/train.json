@@ -1,0 +1,210 @@
+{
+  "device": "mps",
+  "vocab_size": 52,
+  "block": 48,
+  "arms": {
+    "softmax": {
+      "head": "softmax",
+      "history": [
+        {
+          "step": 0,
+          "val_loss": 3.7803,
+          "val_exact_acc": 0.0591
+        },
+        {
+          "step": 100,
+          "val_loss": 2.7711,
+          "val_exact_acc": 0.0917
+        },
+        {
+          "step": 200,
+          "val_loss": 2.7658,
+          "val_exact_acc": 0.0929
+        },
+        {
+          "step": 300,
+          "val_loss": 2.6822,
+          "val_exact_acc": 0.0947
+        },
+        {
+          "step": 400,
+          "val_loss": 2.5827,
+          "val_exact_acc": 0.0992
+        },
+        {
+          "step": 500,
+          "val_loss": 2.5151,
+          "val_exact_acc": 0.1014
+        },
+        {
+          "step": 600,
+          "val_loss": 2.4855,
+          "val_exact_acc": 0.1057
+        },
+        {
+          "step": 700,
+          "val_loss": 2.4537,
+          "val_exact_acc": 0.1135
+        },
+        {
+          "step": 800,
+          "val_loss": 2.4218,
+          "val_exact_acc": 0.1133
+        },
+        {
+          "step": 900,
+          "val_loss": 2.4042,
+          "val_exact_acc": 0.1107
+        },
+        {
+          "step": 1000,
+          "val_loss": 2.3891,
+          "val_exact_acc": 0.1105
+        },
+        {
+          "step": 1100,
+          "val_loss": 2.375,
+          "val_exact_acc": 0.116
+        },
+        {
+          "step": 1200,
+          "val_loss": 2.3712,
+          "val_exact_acc": 0.1136
+        },
+        {
+          "step": 1300,
+          "val_loss": 2.3697,
+          "val_exact_acc": 0.1126
+        },
+        {
+          "step": 1400,
+          "val_loss": 2.3682,
+          "val_exact_acc": 0.1135
+        },
+        {
+          "step": 1499,
+          "val_loss": 2.3679,
+          "val_exact_acc": 0.1127
+        }
+      ],
+      "final_val_exact_acc": 0.1127,
+      "final_val_loss": 2.3679,
+      "head_params": 9984,
+      "total_params": 3371904,
+      "train_seconds": 28.5
+    },
+    "kron_decode": {
+      "head": "kron_decode",
+      "history": [
+        {
+          "step": 0,
+          "val_loss": 4.6187,
+          "val_exact_acc": 0.0189,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 100,
+          "val_loss": 0.5337,
+          "val_exact_acc": 0.0586,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 200,
+          "val_loss": 0.4513,
+          "val_exact_acc": 0.0821,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 300,
+          "val_loss": 0.449,
+          "val_exact_acc": 0.0828,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 400,
+          "val_loss": 0.4489,
+          "val_exact_acc": 0.085,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 500,
+          "val_loss": 0.4451,
+          "val_exact_acc": 0.0862,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 600,
+          "val_loss": 0.4416,
+          "val_exact_acc": 0.0865,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 700,
+          "val_loss": 0.4352,
+          "val_exact_acc": 0.0929,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 800,
+          "val_loss": 0.4288,
+          "val_exact_acc": 0.0935,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 900,
+          "val_loss": 0.4224,
+          "val_exact_acc": 0.0998,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1000,
+          "val_loss": 0.4186,
+          "val_exact_acc": 0.0998,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1100,
+          "val_loss": 0.4159,
+          "val_exact_acc": 0.0989,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1200,
+          "val_loss": 0.4144,
+          "val_exact_acc": 0.0991,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1300,
+          "val_loss": 0.4128,
+          "val_exact_acc": 0.1002,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1400,
+          "val_loss": 0.4127,
+          "val_exact_acc": 0.1025,
+          "val_free_byte_acc": 0.0
+        },
+        {
+          "step": 1499,
+          "val_loss": 0.4124,
+          "val_exact_acc": 0.1025,
+          "val_free_byte_acc": 0.0
+        }
+      ],
+      "final_val_exact_acc": 0.1025,
+      "final_val_loss": 0.4124,
+      "head_params": 1587232,
+      "total_params": 4949152,
+      "train_seconds": 45.3
+    }
+  },
+  "summary": {
+    "softmax_exact_acc": 0.1127,
+    "kron_exact_acc": 0.1025,
+    "softmax_head_params": 9984,
+    "kron_head_params": 1587232,
+    "note": "V2 head is competitive on next-token exact-match while its head size is independent of |V| (see prove.py for the scaling curve)."
+  }
+}

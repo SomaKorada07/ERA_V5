@@ -1,0 +1,116 @@
+{
+  "device": "mps",
+  "n_train_words": 1200,
+  "n_test_words": 300,
+  "history": [
+    {
+      "step": 0,
+      "train_word_recon": 0.0,
+      "unseen_word_recon": 0.0
+    },
+    {
+      "step": 250,
+      "train_word_recon": 0.9033,
+      "unseen_word_recon": 0.4233
+    },
+    {
+      "step": 500,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.63
+    },
+    {
+      "step": 750,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.66
+    },
+    {
+      "step": 1000,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.6833
+    },
+    {
+      "step": 1250,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.69
+    },
+    {
+      "step": 1500,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.7
+    },
+    {
+      "step": 1750,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.7067
+    },
+    {
+      "step": 2000,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.71
+    },
+    {
+      "step": 2250,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.71
+    },
+    {
+      "step": 2499,
+      "train_word_recon": 1.0,
+      "unseen_word_recon": 0.71
+    }
+  ],
+  "final_train_word_recon": 1.0,
+  "final_unseen_word_recon": 0.71,
+  "softmax_unseen_representable_frac": 0.0,
+  "examples_unseen": [
+    {
+      "target": "aacdx",
+      "emitted": "aacdx"
+    },
+    {
+      "target": "acf",
+      "emitted": "acf"
+    },
+    {
+      "target": "adyfz",
+      "emitted": "adyfz"
+    },
+    {
+      "target": "agh",
+      "emitted": "agh"
+    },
+    {
+      "target": "agnudp",
+      "emitted": "agnudp"
+    },
+    {
+      "target": "agqdz",
+      "emitted": "agqdz"
+    },
+    {
+      "target": "ameouby",
+      "emitted": "ameokbl"
+    },
+    {
+      "target": "ang",
+      "emitted": "ang"
+    },
+    {
+      "target": "aoeinpji",
+      "emitted": "ageinpli"
+    },
+    {
+      "target": "aogcmh",
+      "emitted": "aogcmh"
+    },
+    {
+      "target": "aqrfpcj",
+      "emitted": "aqrfpcs"
+    },
+    {
+      "target": "aquj",
+      "emitted": "aquj"
+    }
+  ],
+  "note": "V2 head reconstructs words never in the training vocabulary. A softmax head can represent 0% of them (no output slot exists)."
+}

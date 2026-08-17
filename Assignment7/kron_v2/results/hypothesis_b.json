@@ -1,0 +1,125 @@
+{
+  "device": "mps",
+  "vocab": 60,
+  "n_multimodal": 12,
+  "n_deterministic": 6,
+  "continuations_per_multi": 3,
+  "word_len": 5,
+  "n_components": 4,
+  "hypothesis_a": {
+    "kl_multimodal": 0.0295,
+    "kl_deterministic": 0.0,
+    "free_argmax_valid_rate": 0.3333
+  },
+  "hypothesis_b_single": {
+    "kl_multimodal": 16.465,
+    "kl_deterministic": 0.8481,
+    "pred_var_multimodal": 0.00256059761159122,
+    "pred_var_deterministic": 0.0025666856672614813,
+    "calibration_ratio": 1.0,
+    "deterministic_map_acc": 0.5,
+    "sampling_recover_TV": 0.6231,
+    "sampling_valid_rate": 0.3778,
+    "free_meaninv_valid_rate": 0.0,
+    "free_sampled_valid_rate": 0.0006
+  },
+  "hypothesis_b_mixture": {
+    "kl_multimodal": 0.1169,
+    "kl_deterministic": 0.115,
+    "mix_entropy_multimodal": 1.2152,
+    "mix_entropy_deterministic": 0.0001,
+    "calibration_ratio": 16395.02,
+    "deterministic_map_acc": 1.0,
+    "open_vocab_sampling_TV": 0.0302,
+    "open_vocab_valid_rate": 0.9832
+  },
+  "examples": [
+    {
+      "context": "ctx00",
+      "true": [
+        "tixlz",
+        "wxuqa",
+        "oyhub"
+      ],
+      "components": [
+        {
+          "word": "wxuqa",
+          "pi": 0.325
+        },
+        {
+          "word": "oyhub",
+          "pi": 0.322
+        },
+        {
+          "word": "tixlz",
+          "pi": 0.322
+        },
+        {
+          "word": "xseuz",
+          "pi": 0.031
+        }
+      ]
+    },
+    {
+      "context": "ctx01",
+      "true": [
+        "fdlph",
+        "mrdsh",
+        "axgni"
+      ],
+      "components": [
+        {
+          "word": "fdlph",
+          "pi": 0.326
+        },
+        {
+          "word": "axgni",
+          "pi": 0.322
+        },
+        {
+          "word": "mrdsh",
+          "pi": 0.319
+        },
+        {
+          "word": "ndfnl",
+          "pi": 0.033
+        }
+      ]
+    },
+    {
+      "context": "ctx02",
+      "true": [
+        "fymfy",
+        "zcett",
+        "oeeaa"
+      ],
+      "components": [
+        {
+          "word": "zcett",
+          "pi": 0.324
+        },
+        {
+          "word": "fymfy",
+          "pi": 0.322
+        },
+        {
+          "word": "oeeaa",
+          "pi": 0.321
+        },
+        {
+          "word": "ebnje",
+          "pi": 0.032
+        }
+      ]
+    }
+  ],
+  "headline": {
+    "A_kl_multimodal": 0.0295,
+    "single_gauss_kl_multimodal": 16.465,
+    "mixture_kl_multimodal": 0.1169,
+    "A_open_vocab_valid": 0.3333,
+    "single_gauss_open_vocab_valid": 0.0006,
+    "mixture_open_vocab_valid": 0.9832,
+    "mixture_calibration_ratio": 16395.02
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "roundtrip": {
+    "n_tokens": 70,
+    "n_failures": 0,
+    "exact_invertible": true,
+    "failures": []
+  },
+  "head_target_consistency": {
+    "n_tokens": 52,
+    "n_exact": 52,
+    "all_exact": true
+  },
+  "param_scaling": {
+    "d_model": 768,
+    "d_p": 32,
+    "n_classes": 257,
+    "rows": [
+      {
+        "vocab": 1000,
+        "softmax_head_params": 768000,
+        "kron_head_params": 6324256,
+        "reduction_x": 0.1
+      },
+      {
+        "vocab": 50000,
+        "softmax_head_params": 38400000,
+        "kron_head_params": 6324256,
+        "reduction_x": 6.1
+      },
+      {
+        "vocab": 131072,
+        "softmax_head_params": 100663296,
+        "kron_head_params": 6324256,
+        "reduction_x": 15.9
+      },
+      {
+        "vocab": 262144,
+        "softmax_head_params": 201326592,
+        "kron_head_params": 6324256,
+        "reduction_x": 31.8
+      },
+      {
+        "vocab": 1000000,
+        "softmax_head_params": 768000000,
+        "kron_head_params": 6324256,
+        "reduction_x": 121.4
+      }
+    ]
+  }
+}
