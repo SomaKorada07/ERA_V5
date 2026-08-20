@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Attention Works Now</title>
+<meta name="description" content="A chronological, honestly-traded tour of attention mechanisms — from scaled dot-product attention to sparse and compressed attention — told as the field thinking out loud.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  color-scheme: light;
+  --plane:#f4f5f2;         /* page ground, cool neutral biased to ink-blue */
+  --surface:#fbfbf9;       /* card surface */
+  --surface-2:#eef0ec;
+  --ink:#141821;           /* primary ink, blue-black */
+  --ink-2:#4b5364;         /* secondary */
+  --muted:#7c8494;         /* labels/axes */
+  --hair:rgba(20,24,33,0.11);
+  --hair-strong:rgba(20,24,33,0.22);
+  --accent:#2b4c7e;        /* ink-blue accent */
+  --accent-soft:#e5ecf5;
+
+  /* cost-dimension categorical palette (validated slots, always paired with a text label) */
+  --dim-position:#2a78d6;  /* blue    */
+  --dim-compute:#eb6834;   /* orange  */
+  --dim-memory:#1baf7a;    /* aqua    */
+  --dim-context:#4a3aa7;   /* violet  */
+  --dim-recur:#e87ba4;     /* magenta */
+  --dim-sparse:#c98500;    /* yellow-dark (contrast on light) */
+
+  /* heatmap sequential (blue ramp) */
+  --hm-0:#eef3fb; --hm-1:#cde2fb; --hm-2:#9ec5f4; --hm-3:#6da7ec; --hm-4:#3987e5; --hm-5:#256abf; --hm-6:#104281;
+
+  --good:#0a7a3d; --warn:#b6741a;
+  --radius:14px;
+  --maxw:960px;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --serif:"IBM Plex Serif",Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --plane:#0c0e13;
+    --surface:#14171e;
+    --surface-2:#1b1f28;
+    --ink:#eef1f6;
+    --ink-2:#aeb6c4;
+    --muted:#7f8798;
+    --hair:rgba(255,255,255,0.11);
+    --hair-strong:rgba(255,255,255,0.20);
+    --accent:#7fa9e0;
+    --accent-soft:#1c2634;
+    --dim-position:#3987e5;
+    --dim-compute:#d95926;
+    --dim-memory:#199e70;
+    --dim-context:#9085e9;
+    --dim-recur:#d55181;
+    --dim-sparse:#c98500;
+    --hm-0:#141c28; --hm-1:#173154; --hm-2:#1a4a86; --hm-3:#2a6fc4; --hm-4:#3987e5; --hm-5:#68a4ec; --hm-6:#a9c8f4;
+    --good:#2fb968; --warn:#e0a72c;
+  }
+}
+:root[data-theme="dark"]{
+  --plane:#0c0e13;
+  --surface:#14171e;
+  --surface-2:#1b1f28;
+  --ink:#eef1f6;
+  --ink-2:#aeb6c4;
+  --muted:#7f8798;
+  --hair:rgba(255,255,255,0.11);
+  --hair-strong:rgba(255,255,255,0.20);
+  --accent:#7fa9e0;
+  --accent-soft:#1c2634;
+  --dim-position:#3987e5;
+  --dim-compute:#d95926;
+  --dim-memory:#199e70;
+  --dim-context:#9085e9;
+  --dim-recur:#d55181;
+  --dim-sparse:#c98500;
+  --hm-0:#141c28; --hm-1:#173154; --hm-2:#1a4a86; --hm-3:#2a6fc4; --hm-4:#3987e5; --hm-5:#68a4ec; --hm-6:#a9c8f4;
+  --good:#2fb968; --warn:#e0a72c;
+}
+
+/* ============ BASE ============ */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--plane);color:var(--ink);
+  font-family:var(--font);font-size:17px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+h1,h2,h3{text-wrap:balance;line-height:1.12;margin:0}
+p{margin:0 0 1em}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+code,.mono{font-family:var(--mono)}
+::selection{background:var(--accent-soft)}
+
+.label{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+
+/* ============ THEME TOGGLE ============ */
+.toggle{position:fixed;top:14px;right:14px;z-index:60;background:var(--surface);border:1px solid var(--hair-strong);
+  color:var(--ink-2);border-radius:99px;padding:7px 13px;font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;gap:7px;align-items:center}
+.toggle:hover{border-color:var(--accent)}
+.toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ============ HERO ============ */
+.hero{padding:88px 0 40px;position:relative;overflow:hidden}
+.hero .kick{margin-bottom:20px}
+.hero h1{font-size:clamp(38px,7vw,72px);font-weight:600;letter-spacing:-.02em}
+.hero .lede{font-size:clamp(18px,2.4vw,22px);color:var(--ink-2);max-width:38ch;margin-top:22px}
+.hero .meta{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px 20px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.hero .meta b{color:var(--ink-2);font-weight:500}
+
+/* ============ SECTION ============ */
+.section{padding:56px 0}
+.section-head{margin-bottom:30px}
+.section-head h2{font-size:clamp(26px,4vw,38px);font-weight:600;letter-spacing:-.015em}
+.section-head .sub{color:var(--ink-2);max-width:62ch;margin-top:14px;font-size:18px}
+
+/* ============ PIPELINE (hero standard attention) ============ */
+.stage{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:22px}
+.pipe{display:flex;flex-direction:column;gap:0;margin:8px 0 0}
+.pipe-step{display:grid;grid-template-columns:132px 1fr;gap:18px;align-items:start;padding:16px 0;border-top:1px solid var(--hair)}
+.pipe-step:first-child{border-top:none}
+.pipe-step .op{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)}
+.pipe-step .op .n{display:block;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.1em;margin-bottom:3px}
+.pipe-step .desc{font-size:15px;color:var(--ink-2)}
+.pipe-step .desc b{color:var(--ink);font-weight:600}
+.arrowcol{text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+
+.eq{font-family:var(--mono);font-size:clamp(14px,2.3vw,19px);background:var(--surface-2);border:1px solid var(--hair);border-radius:10px;
+  padding:14px 16px;overflow-x:auto;color:var(--ink);white-space:nowrap}
+.eq .dim{color:var(--muted)}
+.eq .hot{color:var(--accent);font-weight:600}
+
+.controls{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:center;margin:20px 0 6px}
+.control{display:flex;flex-direction:column;gap:5px;min-width:170px}
+.control label{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.control label b{color:var(--accent);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.seg{display:inline-flex;border:1px solid var(--hair-strong);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;border:none;color:var(--ink-2);font-family:var(--mono);font-size:12.5px;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
+:root[data-theme=dark] .seg button[aria-pressed=true],
+:root:not([data-theme=light]) .seg button[aria-pressed=true]{color:#0c0e13}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]) .seg button[aria-pressed=true]{color:#fff}}
+
+/* attention grid demo */
+.demo-grid{display:grid;grid-template-columns:1fr;gap:22px;margin-top:8px}
+@media(min-width:720px){.demo-grid{grid-template-columns:1.15fr .85fr}}
+.heat{border-collapse:separate;border-spacing:3px;font-family:var(--mono);font-size:12px;width:100%}
+.heat th{color:var(--muted);font-weight:500;font-size:11px;padding:2px}
+.heat td{width:1%;text-align:center;color:#fff;border-radius:5px;padding:7px 4px;font-variant-numeric:tabular-nums;
+  transition:background .25s;mix-blend-mode:normal}
+.heat td.masked{background:var(--surface-2)!important;color:var(--muted)}
+.heat .rowlab{color:var(--ink-2);text-align:right;padding-right:8px;font-size:11px;white-space:nowrap}
+.legend-hm{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:12px}
+.legend-hm .bar{height:9px;width:120px;border-radius:5px;background:linear-gradient(90deg,var(--hm-0),var(--hm-2),var(--hm-4),var(--hm-6))}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 16px;border-radius:0 10px 10px 0;font-size:15px;color:var(--ink-2);margin-top:18px}
+.callout b{color:var(--ink)}
+
+/* ============ TWO-BILLS FACTS ============ */
+.facts{display:grid;grid-template-columns:1fr;gap:16px;margin-top:8px}
+@media(min-width:680px){.facts{grid-template-columns:1fr 1fr}}
+.fact{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:20px}
+.fact h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:9px}
+.fact .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px;font-weight:600}
+.fact p{font-size:14.5px;color:var(--ink-2);margin:0}
+.fact .big{font-family:var(--mono);font-size:26px;color:var(--ink);margin:6px 0;font-variant-numeric:tabular-nums}
+
+/* ============ TIMELINE ============ */
+.tl-legend{display:flex;flex-wrap:wrap;gap:8px 10px;margin:26px 0 8px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--ink-2);
+  border:1px solid var(--hair-strong);border-radius:99px;padding:5px 11px;cursor:pointer;background:var(--surface);user-select:none}
+.chip .dot{width:10px;height:10px;border-radius:3px;flex:none}
+.chip[aria-pressed=false]{opacity:.38}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.timeline{position:relative;margin-top:20px}
+.timeline::before{content:"";position:absolute;left:calc(var(--spine) - 1px);top:6px;bottom:0;width:2px;
+  background:linear-gradient(var(--hair-strong),var(--hair));--spine:0}
+:root{--spine:118px}
+@media(max-width:640px){:root{--spine:20px}}
+
+.era{display:grid;grid-template-columns:var(--spine) 1fr;gap:0;margin:34px 0 10px;align-items:center}
+.era .yr{grid-column:1;font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right;padding-right:26px}
+.era .band{grid-column:2;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-2);
+  padding-left:26px;position:relative}
+.era .band::before{content:"";position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:11px;height:11px;
+  border-radius:50%;background:var(--plane);border:2px solid var(--accent)}
+.era .band b{color:var(--ink);letter-spacing:0;font-family:var(--font);font-weight:600}
+
+.card-row{display:grid;grid-template-columns:var(--spine) 1fr;align-items:start}
+.card-row .when{grid-column:1;text-align:right;padding:24px 26px 0 0;font-family:var(--mono);position:relative}
+.card-row .when .date{font-size:12.5px;color:var(--ink);font-weight:500}
+.card-row .when .idx{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.card-row .when::after{content:"";position:absolute;right:-6px;top:32px;width:11px;height:11px;border-radius:3px;
+  background:var(--dot,var(--accent));border:2px solid var(--plane);box-shadow:0 0 0 1px var(--dot,var(--accent))}
+@media(max-width:640px){
+  .card-row .when{text-align:left;padding:0 0 8px 26px}
+  .card-row .when::after{right:auto;left:-6px;top:4px}
+}
+
+.card{grid-column:2;margin:16px 0 12px 26px;background:var(--surface);border:1px solid var(--hair);
+  border-radius:var(--radius);overflow:hidden;transition:border-color .2s,box-shadow .2s,opacity .3s}
+.card.dim-hidden{display:none}
+.card:hover{border-color:var(--hair-strong)}
+.card-top{padding:22px 24px 4px;border-top:4px solid var(--dot,var(--accent))}
+.card .name{font-size:22px;font-weight:600;letter-spacing:-.01em;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.card .name .abbr{color:var(--ink)}
+.card .name .full{font-size:15px;color:var(--muted);font-weight:400}
+.card .dimtag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#fff;
+  padding:3px 9px;border-radius:99px;font-weight:600;align-self:center}
+.card .src{margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.card .src a{color:var(--accent)}
+
+.beats{padding:6px 24px 20px}
+.beat{display:grid;grid-template-columns:112px 1fr;gap:14px;padding:11px 0;border-top:1px dashed var(--hair);align-items:start}
+.beat:first-child{border-top:none}
+.beat .bl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.beat .bt{font-size:15px;color:var(--ink-2)}
+.beat .bt b{color:var(--ink);font-weight:600}
+.beat.problem .bl{color:var(--dim-compute)}
+.beat.fixed .bl{color:var(--good)}
+.beat.cost .bl{color:var(--warn)}
+
+.trade{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border-top:1px solid var(--hair)}
+@media(min-width:640px){.trade{grid-template-columns:1fr 1fr 1fr}}
+.trade div{background:var(--surface);padding:15px 18px}
+.trade .tl-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;font-weight:600}
+.trade .buys .tl-h{color:var(--good)}
+.trade .gives .tl-h{color:var(--warn)}
+.trade .when-h .tl-h{color:var(--accent)}
+.trade p{font-size:14px;color:var(--ink-2);margin:0}
+
+.note{font-size:13px;color:var(--muted);padding:12px 24px 18px;font-style:italic;border-top:1px dashed var(--hair)}
+.note b{color:var(--ink-2);font-style:normal}
+
+/* mini diagram in card */
+.minifig{padding:2px 24px 18px}
+.minifig svg{max-width:100%;height:auto;display:block}
+.minifig .cap{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px}
+
+/* ============ CLOSING ============ */
+.roads{display:grid;grid-template-columns:1fr;gap:16px;margin-top:10px}
+@media(min-width:680px){.roads{grid-template-columns:1fr 1fr}}
+.road{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:22px}
+.road h3{font-size:18px;margin-bottom:6px}
+.road .rk{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.road ul{margin:10px 0 0;padding-left:18px;color:var(--ink-2);font-size:14.5px}
+.road li{margin-bottom:6px}
+
+footer{padding:60px 0 80px;color:var(--muted);font-size:13.5px;border-top:1px solid var(--hair);margin-top:40px}
+footer a{color:var(--accent)}
+footer .mono{display:block;margin-top:10px;font-size:12px}
+
+.disclaimer{background:var(--surface-2);border:1px dashed var(--hair-strong);border-radius:10px;padding:16px 18px;font-size:14px;color:var(--ink-2);margin-top:20px}
+.disclaimer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<button class="toggle" id="themeBtn" aria-label="Toggle colour theme"><span id="themeIcon">◐</span><span id="themeTxt">Theme</span></button>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kick label">A field thinking out loud · 2017 → 2025</div>
+    <h1>How attention works now</h1>
+    <p class="lede">Start with one mechanism. Then watch every later idea arrive as an answer to a cost the last one created.</p>
+    <div class="meta">
+      <span><b>Read as:</b> what existed → the problem → the new mechanism → what it fixed → the new trade-off</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ STANDARD ATTENTION ============ -->
+<main>
+<section class="section" id="standard">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="label">The mechanism everything else modifies</div>
+      <h2>Scaled dot-product attention</h2>
+      <p class="sub">Every token becomes three projections of itself — a <b>query</b> (what am I looking for?), a <b>key</b> (what do I contain?) and a <b>value</b> (what I'll hand over if you pick me). Attention is five steps on those three things.</p>
+    </div>
+
+    <div class="stage">
+      <div class="eq" id="eqBox">
+        Attention(Q,K,V) = softmax( <span class="hot">Q&nbsp;Kᵀ</span> <span class="dim">/</span> √d<sub>k</sub> <span class="dim">+ M</span> ) V
+      </div>
+      <div class="pipe" id="pipe">
+        <div class="pipe-step"><div class="op"><span class="n">Step 1 · score</span>Q × Kᵀ</div><div class="desc">Compare the current query with <b>every</b> key by dot product. One query–key pair → one number. All-to-all → a full score matrix.</div></div>
+        <div class="pipe-step"><div class="op"><span class="n">Step 2 · scale</span>÷ √d<sub>k</sub></div><div class="desc">Raw dot products grow with head width. Dividing by √d<sub>k</sub> keeps them in a range softmax can use.</div></div>
+        <div class="pipe-step"><div class="op"><span class="n">Step 3 · mask</span>+ M</div><div class="desc">For a decoder, set every <b>future</b> position to −∞ so softmax gives it exactly zero weight. Lets us train the whole sequence in parallel while staying left-to-right.</div></div>
+        <div class="pipe-step"><div class="op"><span class="n">Step 4 · softmax</span>row-wise</div><div class="desc">Turn each query's row of scores into positive weights that sum to one. This is where the tokens <b>compete</b>.</div></div>
+        <div class="pipe-step"><div class="op"><span class="n">Step 5 · sum</span>weights × V</div><div class="desc">Multiply every value by its weight and add. Out comes one new vector for the current token.</div></div>
+      </div>
+    </div>
+
+    <!-- interactive -->
+    <div class="stage" style="margin-top:18px">
+      <div class="label" style="margin-bottom:4px">Live · six tokens, one head</div>
+      <p style="font-size:15px;color:var(--ink-2);margin:6px 0 0">The sentence below runs through real scaled dot-product attention. Each cell is how much the <b>row</b> token attends to the <b>column</b> token. Drop the temperature and the distribution sharpens; turn the mask off and watch weight leak onto tokens that haven't happened yet — the exact problem the causal mask solves.</p>
+      <div class="controls">
+        <div class="control">
+          <label>Temperature <b id="tempV">1.0</b></label>
+          <input type="range" id="temp" min="0.2" max="2.4" step="0.1" value="1.0">
+        </div>
+        <div class="control" style="min-width:auto">
+          <label>Causal mask</label>
+          <div class="seg" role="group" aria-label="Causal mask">
+            <button id="maskOn" aria-pressed="true">on</button>
+            <button id="maskOff" aria-pressed="false">off</button>
+          </div>
+        </div>
+      </div>
+      <div class="demo-grid">
+        <div style="overflow-x:auto">
+          <table class="heat" id="heat" aria-label="Attention weight matrix"></table>
+          <div class="legend-hm"><span>low</span><span class="bar"></span><span>high attention weight</span></div>
+        </div>
+        <div>
+          <div class="label" style="margin-bottom:8px">Two facts that drive the rest of the story</div>
+          <div class="facts" style="grid-template-columns:1fr">
+            <div class="fact">
+              <h3><span class="tag" style="background:var(--dim-compute);color:#fff">Bill 1 · compute</span></h3>
+              <p>Every token is compared with every other token. The score matrix grows as T².</p>
+              <div class="big" id="factCompute">6 × 6 = 36</div>
+              <p>Double the context → ~4× the comparisons.</p>
+            </div>
+            <div class="fact">
+              <h3><span class="tag" style="background:var(--dim-memory);color:#fff">Bill 2 · KV memory</span></h3>
+              <p>To generate one token at a time, the model keeps every earlier key & value — the <b>KV cache</b>. It grows as T, and it is <b>private per conversation</b>.</p>
+              <div class="big" id="factMem">6 K/V pairs saved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout"><b>Two facts to carry forward.</b> (1) Attention is exact all-to-all comparison — that is both its power and its T² cost. (2) Attention has no idea of order: swap two identical tokens and nothing changes, so <b>position</b> has to be injected separately. Almost every mechanism below attacks one of these — compute, memory, or position — and pays for it somewhere else.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TIMELINE ============ -->
+<section class="section" id="timeline">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="label">2017 → 2025 · in the order they were launched</div>
+      <h2>The timeline of trade-offs</h2>
+      <p class="sub">Not grouped into a neat taxonomy, and not in teaching order — arranged by <b>when each idea actually appeared</b>. Read top to bottom and you can watch the field's priorities move: exact global attention → cheaper decode memory → better position → longer context → recurrence returning → sparsity & compression returning. Every date is checked against the primary source (see footer). Colour marks the <b>cost each idea mainly attacks</b>; the label always says which, so colour is never the only cue.</p>
+    </div>
+
+    <div class="tl-legend" id="legend"></div>
+    <div class="timeline" id="tlRoot"></div>
+
+    <div class="disclaimer" id="courseNote"></div>
+  </div>
+</section>
+
+<!-- ============ CLOSING ============ -->
+<section class="section" id="closing">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="label">What the timeline is really showing</div>
+      <h2>Long context is a system, not a number</h2>
+      <p class="sub">No mechanism here is simply "better." Each bought something and gave something up, and the next paper attacked the new cost. Put an actual target on your workload before you choose — 2K chatbot, 256K agent, 1M codebase — because the right answer changes with it. Two broad strategies fall out of the whole story:</p>
+    </div>
+    <div class="roads">
+      <div class="road">
+        <div class="rk">Road 1 · train short, then stretch</div>
+        <h3>Extend the position scheme after training</h3>
+        <p style="font-size:14.5px;color:var(--ink-2);margin:0">Train at a length you can afford, then recalibrate positions (NTK-aware, YaRN, and the like) to serve much longer. Cheap — but every extension method has a ceiling; 32× working is no promise 320× will.</p>
+      </div>
+      <div class="road">
+        <div class="rk">Road 2 · build long, then train long</div>
+        <h3>Make long sequences affordable natively</h3>
+        <p style="font-size:14.5px;color:var(--ink-2);margin:0">Change the architecture — linear state, sparsity, compression — so training directly on long sequences is practical. No positional-extension ceiling, but you pay in training cost and complexity.</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px"><b>The through-line.</b> A stored absolute position table hits a hard length wall. GQA slows KV growth but never stops it. So every serious long-context system reaches for at least one of: better position, linear state, sparsity, or compression — and pays the matching bill. The skill is choosing which bill you can afford for <em>your</em> workload.</div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="label" style="margin-bottom:10px">Sources & method</div>
+    <p style="max-width:64ch">Every launch date is the <b>arXiv v1 submission date</b> (or the original blog/release), verified against the primary source rather than a secondary summary — dates are exactly where a confident-sounding agent goes wrong. Full source list with links is in the <a href="https://github.com/REPO_PLACEHOLDER">GitHub repository README</a>.</p>
+    <span class="mono">Built for ERA V5 · Session 8 — Modern Attention Variants. Corrections welcome; the timeline is only as good as its citations.</span>
+  </div>
+</footer>
+
+<script>
+/* ================= THEME ================= */
+(function(){
+  const b=document.getElementById('themeBtn'),ic=document.getElementById('themeIcon'),tx=document.getElementById('themeTxt');
+  function cur(){const s=document.documentElement.getAttribute('data-theme');if(s)return s;return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+  function set(t){document.documentElement.setAttribute('data-theme',t);ic.textContent=t==='dark'?'☾':'☀';tx.textContent=t==='dark'?'Dark':'Light';if(window.__repaintHeat)window.__repaintHeat();}
+  b.addEventListener('click',()=>set(cur()==='dark'?'light':'dark'));
+  set(cur());
+})();
+
+/* ================= STANDARD ATTENTION DEMO ================= */
+const TOKENS=["The","cat","sat","on","the","mat"];
+// fixed pseudo-scores (content affinities) so the demo is deterministic & sensible
+const BASE=[
+/*The*/[2.0,0.3,0.2,0.1,0.4,0.1],
+/*cat*/[1.4,2.2,0.5,0.2,0.3,0.3],
+/*sat*/[0.6,2.6,2.0,0.4,0.3,0.4],
+/*on */[0.3,0.5,1.3,1.8,0.6,0.5],
+/*the*/[0.4,0.4,0.3,0.9,1.6,0.7],
+/*mat*/[0.3,1.9,1.1,0.8,0.7,2.3]
+];
+let TEMP=1.0, MASK=true;
+function softmaxRow(r){const m=Math.max(...r);const e=r.map(x=>Math.exp((x-m)));const s=e.reduce((a,b)=>a+b,0);return e.map(x=>x/s);}
+function weights(){
+  const out=[];
+  for(let i=0;i<6;i++){
+    let row=BASE[i].map(x=>x/TEMP);
+    if(MASK)row=row.map((x,j)=>j>i?-1e9:x);
+    out.push(softmaxRow(row));
+  }
+  return out;
+}
+function hmColor(t){ // t in 0..1 -> stepped blue ramp via css vars
+  const steps=['--hm-0','--hm-1','--hm-2','--hm-3','--hm-4','--hm-5','--hm-6'];
+  const cs=getComputedStyle(document.documentElement);
+  const idx=Math.min(6,Math.max(0,Math.round(t*6)));
+  return cs.getPropertyValue(steps[idx]).trim();
+}
+function paintHeat(){
+  const W=weights();
+  const el=document.getElementById('heat');
+  let html='<tr><th></th>';
+  for(let j=0;j<6;j++)html+='<th>'+TOKENS[j]+'</th>';
+  html+='</tr>';
+  for(let i=0;i<6;i++){
+    html+='<tr><td class="rowlab">'+TOKENS[i]+'</td>';
+    for(let j=0;j<6;j++){
+      const masked=MASK&&j>i;
+      if(masked){html+='<td class="masked">·</td>';continue;}
+      const w=W[i][j];
+      const c=hmColor(w);
+      const txtcol=w>0.45?'#fff':(w>0.22?'#eef':'var(--ink-2)');
+      html+='<td style="background:'+c+';color:'+(w>0.4?'#fff':'rgba(255,255,255,.92)')+'" title="'+TOKENS[i]+' → '+TOKENS[j]+' : '+w.toFixed(2)+'">'+w.toFixed(2)+'</td>';
+    }
+    html+='</tr>';
+  }
+  el.innerHTML=html;
+}
+document.getElementById('temp').addEventListener('input',e=>{TEMP=+e.target.value;document.getElementById('tempV').textContent=TEMP.toFixed(1);paintHeat();});
+function setMask(on){MASK=on;document.getElementById('maskOn').setAttribute('aria-pressed',on);document.getElementById('maskOff').setAttribute('aria-pressed',!on);paintHeat();}
+document.getElementById('maskOn').addEventListener('click',()=>setMask(true));
+document.getElementById('maskOff').addEventListener('click',()=>setMask(false));
+window.__repaintHeat=paintHeat;
+paintHeat();
+
+/* ================= TIMELINE DATA + RENDER ================= */
+/* injected below */
+const DIMENSIONS = window.__DIMS__ || {};
+const DATA = window.__DATA__ || [];
+</script>
+<script src="timeline-data.js"></script>
+<script src="render.js"></script>
+</body>
+</html>
