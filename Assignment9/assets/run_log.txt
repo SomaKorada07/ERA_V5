@@ -1,0 +1,100 @@
+
+device: mps
+vocab size: 50257
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+FineWeb: 116 docs, 80022 tokens
+first doc preview: "|Viewing Single Post From: Spoilers for the Week of February 11th|\n|Lil||Feb 1 2013, 09:58 AM|\nDon't care about Chloe/Taniel/Jen-Jen. Don't care about Sami, rea"
+GPT ready | 7234432 params
+tokens  (1, 64)  = (B batch, T sequence length)
+hidden  (1, 64, 128)  = (B, T, C = n_embd hidden dim)
+logits  (1, 64, 50257)  = (B, T, V = vocab size)
+logits[:, :-1, :] (1, 63, 50257)  = (B, T-1, V)  predictions
+tokens[:, 1:]     (1, 63)  = (B, T-1)     targets
+flat_logits (63, 50257)  = (B*(T-1), V)
+flat_labels (63,)  = (B*(T-1),)
+
+loss (scalar): 10.864845275878906
+pos  INPUT (token i)    -> TARGET (token i+1)
+------------------------------------------------
+  0  '|'                -> 'View'
+  1  'View'             -> 'ing'
+  2  'ing'              -> ' Single'
+  3  ' Single'          -> ' Post'
+  4  ' Post'            -> ' From'
+  5  ' From'            -> ':'
+  6  ':'                -> ' Sp'
+  7  ' Sp'              -> 'oil'
+  8  'oil'              -> 'ers'
+  9  'ers'              -> ' for'
+ 10  ' for'             -> ' the'
+ 11  ' the'             -> ' Week'
+ 12  ' Week'            -> ' of'
+ 13  ' of'              -> ' February'
+ 14  ' February'        -> ' 11'
+ 15  ' 11'              -> 'th'
+ 16  'th'               -> '|'
+ 17  '|'                -> '\n'
+ 18  '\n'               -> '|'
+
+Reconstructed from targets: 'Viewing Single Post From: Spoilers for the Week of February 11th|\n|'
+batch shape (2, 6)  (2 sequences, padded to equal length)
+contributing tokens  raw = 10   masked = 6   (dropped 4 PADs)
+loss  raw = 10.5423   masked = 10.7557
+The count changed, so padding is provably excluded from the masked loss.
+packed shape (1, 14)  (docA + docB in one sequence)
+boundary prediction: last-of-A must predict 'Photos' (first token of docB)
+loss before masking boundary = 10.8708
+loss after  masking boundary = 10.8359
+The difference is the cross-document prediction's contribution — a target the model could never legitimately know. Masking it removes an impossible, noisy term from the average.
+untrained loss       = 10.8569
+ln(vocab)            = 10.8249   <- expected loss
+untrained perplexity = 51,891.1
+vocab size           = 50,257   <- expected perplexity
+PASS: untrained perplexity is within 25% of the vocab size.
+tied   head : 7,234,432 params
+untied head : 13,667,328 params
+difference  : 6,432,896
+vocab*n_embd: 6,432,896  <- matches the difference exactly
+naive   loss = 10.853460
+chunked loss = 10.853460   (identical -> chunking is numerically correct)
+peak naive   =   196.32 MB
+peak chunked =    49.08 MB
+ratio (naive / chunked) = 4.00x lower peak
+step   0 | loss1(t+1) 10.838 | loss2(t+2) 10.835 | sum 21.673 | gap -0.002
+step  25 | loss1(t+1) 9.751 | loss2(t+2) 9.735 | sum 19.486 | gap -0.016
+step  50 | loss1(t+1) 8.847 | loss2(t+2) 8.816 | sum 17.663 | gap -0.031
+step  75 | loss1(t+1) 8.149 | loss2(t+2) 8.112 | sum 16.262 | gap -0.037
+step 100 | loss1(t+1) 7.553 | loss2(t+2) 7.539 | sum 15.092 | gap -0.014
+step 125 | loss1(t+1) 7.551 | loss2(t+2) 7.562 | sum 15.114 | gap +0.011
+step 150 | loss1(t+1) 7.295 | loss2(t+2) 7.317 | sum 14.612 | gap +0.022
+step 175 | loss1(t+1) 7.348 | loss2(t+2) 7.419 | sum 14.767 | gap +0.071
+step 200 | loss1(t+1) 7.374 | loss2(t+2) 7.474 | sum 14.848 | gap +0.100
+step 225 | loss1(t+1) 7.187 | loss2(t+2) 7.322 | sum 14.509 | gap +0.135
+step 249 | loss1(t+1) 7.145 | loss2(t+2) 7.298 | sum 14.443 | gap +0.152
+
+trained 250 steps in 10.0s
+FINAL  loss1(t+1) = 7.145   loss2(t+2) = 7.298   sum = 14.443
+Training with a WRONG (backwards) shift:
+  step   0 | loss 10.851   <- looks like it is 'learning'!
+  step  30 | loss 9.549   <- looks like it is 'learning'!
+  step  60 | loss 8.383   <- looks like it is 'learning'!
+  step  90 | loss 7.810   <- looks like it is 'learning'!
+  step 120 | loss 7.452   <- looks like it is 'learning'!
+  step 149 | loss 7.164   <- looks like it is 'learning'!
+
+pos  INPUT (token i)  model predicts   CORRECT next (i+1)
+------------------------------------------------------------
+  0  '|'              ' the'           'View'
+  1  'View'           '.'              'ing'
+  2  'ing'            ')'              ' Single'
+  3  ' Single'        '\n'             ' Post'
+  4  ' Post'          '.'              ' From'
+  5  ' From'          '\n'             ':'
+  6  ':'              ' in'            ' Sp'
+  7  ' Sp'            '.'              'oil'
+  8  'oil'            '\n'             'ers'
+  9  'ers'            '\n'             ' for'
+ 10  ' for'           ' in'            ' the'
+
+The 'predictions' echo the INPUT token, not the next one. The pretty loss curve was a lie.
+This is why Part 1.2 prints strings: it is the only check that catches a reversed shift.
