@@ -96,5 +96,9 @@ pos  INPUT (token i)  model predicts   CORRECT next (i+1)
   9  'ers'            '\n'             ' for'
  10  ' for'           ' in'            ' the'
 
-The 'predictions' echo the INPUT token, not the next one. The pretty loss curve was a lie.
+The model predictions do NOT match the CORRECT next tokens: with a backwards shift each
+position is asked to predict the PREVIOUS token, which the causal model has already seen in
+its context -- so the loss measured a trivial copy task, not prediction. It fell smoothly
+because copying is easy, while the model never learned to predict the future.
+The loss looked healthy; the strings show it was optimizing the wrong task.
 This is why Part 1.2 prints strings: it is the only check that catches a reversed shift.
