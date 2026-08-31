@@ -1,0 +1,73 @@
+
+device: mps
+chip: Apple M3 Max
+vocab: 50257
+FineWeb: 60259 tokens
+params: 7242624
+--- inputs ---
+idx (tokens)              (8, 64)             (B batch, T sequence length)
+targets                   (8, 64)             (B, T) each is the NEXT token
+--- embeddings ---
+wte(idx) token emb        (8, 64, 128)        (B, T, C=n_embd)
+wpe positional emb        (64, 128)           (T, C) added per position
+hidden x                  (8, 64, 128)        (B, T, C)
+--- inside attention (block 0) ---
+c_attn qkv                (8, 64, 384)        (B, T, 3C) query|key|value packed
+q per head                (8, 4, 64, 32)      (B, nh heads, T, hd head_dim)
+attn output               (8, 4, 64, 32)      (B, nh, T, hd) causal-masked mix
+--- head + loss ---
+logits                    (8, 64, 50257)      (B, T, V vocab) score per next-token
+shift logits              (504, 50257)        (B*(T-1), V) predictions
+shift targets             (504,)              (B*(T-1),) gold next ids
+loss                      ()                  scalar cross-entropy = 10.8468
+--- gradients (after backward) ---
+lm_head.weight.grad       (50257, 128)        (V, C) dL/dW, same shape as the weight
+blocks[0] c_fc.grad       (512, 128)          (4C, C) same shape as its weight
+
+Rule: every grad tensor has EXACTLY the shape of its parameter. If not, something is broadcasting wrong.
+weight: blocks[0].mlp.c_fc.weight[5,7]
+  L(w+eps) = 10.810915079666
+  L(w-eps) = 10.810915085133
+  finite-difference grad = -0.002733360205
+  backward() grad        = -0.002733360923
+  |difference|           = 7.18e-10
+  agree to ~9.1 decimals  -> autograd is telling the truth
+micro-batch lengths: [8, 64, 16, 64] | token counts: [28, 252, 60, 252] | total: 592
+correct (token-weighted) loss = 10.84334
+wrong   (avg-of-averages) loss = 10.83496   gap = -0.00838
+gradient cosine similarity = 0.83079  (1.0 = identical)
+gradient norms correct/wrong = 3.1068 / 3.7770
+The gradients point in DIFFERENT directions -> the bug changes what the model learns, silently.
+final TRUE token-weighted loss  correct=8.034  wrong=8.190  gap=+0.156
+best  TRUE token-weighted loss  correct=7.604  wrong=7.793
+step 54: grad norm moved 517.0%  while loss moved only 0.82%  (flat)
+  grad norm: 0.492 -> 3.034
+  loss:      7.610 -> 7.672   then drops to 7.563 by step 57
+  => the grad norm moved BEFORE the loss did.
+chip: Apple M3 Max  (assumed peak 14.2 TFLOPS FP32 -- an ESTIMATE)
+params N            = 7,242,624
+flops/token (6N+..) = 43,848,960
+tokens/sec          = 29,093
+achieved FLOPS      = 1.276 TFLOP/s
+MFU                 = 8.98%
+
+Why we are far from 40%:
+ - Tiny model (128-dim, 4 layers): matmuls are too small to saturate the GPU; kernel-launch
+   and Python-loop overhead dominate each step.
+ - Small batch/seq (16x64): low arithmetic intensity -> memory-bandwidth bound, not compute bound.
+ - MPS eager mode: no operator fusion / graph capture (no torch.compile on MPS here); the huge
+   (B*T, 50257) logits+softmax is largely a bandwidth-bound op that the 6N FLOP model ignores.
+ - fp32 on Apple GPU: no low-precision matrix acceleration to raise the ceiling.
+ - To approach 40%: bigger d_model/batch, fused/compiled kernels, and lower precision.
+fp32   0.1 = 0 01111011 10011001100110011001101
+           = sign 0, exp 123-127=-4, 23-bit mantissa -> 0.10000000149011612
+bf16   0.1 = 0 01111011 1001101
+           = same exponent as fp32, mantissa truncated 23->7 bits -> 0.10009765625
+fp8    0.1 = 0 0011 101
+           = exp 3-7=-4, mantissa 5/8=0.625 -> 0.1015625
+           torch float8_e4m3fn confirms -> 0.1015625
+
+Rounding error vs true 0.1:
+  fp32 : 1.49e-09
+  bf16 : 9.77e-05
+  fp8  : 1.56e-03
