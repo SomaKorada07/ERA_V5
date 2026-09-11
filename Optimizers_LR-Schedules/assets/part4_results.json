@@ -1,0 +1,15 @@
+{
+  "stop": 200,
+  "total": 300,
+  "cosine_best_lr": 0.012,
+  "wsd_best_lr": 0.008,
+  "cosine_loss_200": 0.022978523373603822,
+  "wsd_loss_200": 0.02426038235425949,
+  "cosine_loss_300": 0.018936803564429283,
+  "wsd_loss_300": 0.016656628623604775,
+  "lr_cos_200": 0.004257027808765187,
+  "lr_wsd_200": 0.008,
+  "wsd_replanned_lr": 0.018,
+  "wsd_replanned_loss_200": 0.02247912883758545,
+  "better_at_stop": "cosine"
+}
