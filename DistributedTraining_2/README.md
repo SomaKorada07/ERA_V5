@@ -1,6 +1,6 @@
 # Reversibility — training a 20M LLM with a memory-free reversible stack
 
-**ERA V5 · Session 16–17 (Reversibility)** · Apple M3 Max (MPS), no CUDA.
+**ERA V5 · Session 12 (Reversibility)** · Apple M3 Max (MPS), no CUDA.
 
 > Train a ~20M-parameter LLM for a 50M-token budget. Fix a batch size that runs.
 > Train again with **reversibility** (report which integrator variant worked). Train
