@@ -51,7 +51,7 @@ def nb1():
     c = nb.cells
     c.append(md(
         "# 01 · Baseline — a 20M LLM on TinyStories (50M tokens)\n\n"
-        "**ERA V5 · Reversibility assignment**, part 1 of 3.\n\n"
+        "**ERA V5 · Session 12 (Reversibility)**, part 1 of 3.\n\n"
         "Train a ~20M-parameter GPT for a 50M-token budget with a **fixed batch size that "
         "runs**. This is the *standard residual* baseline (the Euler update "
         "`p_{l+1} = p_l + f(p_l)`); autograd stores every layer's activations.\n\n"
@@ -125,7 +125,7 @@ def nb2():
     c = nb.cells
     c.append(md(
         "# 02 · Reversibility — leapfrog stack, same batch\n\n"
-        "**ERA V5 · Reversibility assignment**, part 2 of 3.\n\n"
+        "**ERA V5 · Session 12 (Reversibility)**, part 2 of 3.\n\n"
         "A reversible network doesn't *store* activations — it **rebuilds** them during the "
         "backward pass by running the layer update in reverse. Following Gal, Eliasof, Turek, "
         "Ascher, Treister & Haber, *Reversing Large Language Models for Efficient Training and "
@@ -224,7 +224,7 @@ def nb3():
     c = nb.cells
     c.append(md(
         "# 03 · Push reversibility to the maximum batch + final report\n\n"
-        "**ERA V5 · Reversibility assignment**, part 3 of 3.\n\n"
+        "**ERA V5 · Session 12 (Reversibility)**, part 3 of 3.\n\n"
         "Reversibility makes activation memory ~independent of depth. Here we *spend* that "
         "saving on batch size: how big a batch fits with each stack, and what it costs."
     ))
