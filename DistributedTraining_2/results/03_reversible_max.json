@@ -1,0 +1,140 @@
+{
+  "name": "03_reversible_max",
+  "mode": "reversible",
+  "integrator": "leapfrog",
+  "batch_size": 512,
+  "block_size": 512,
+  "tokens_per_step": 262144,
+  "steps": 190,
+  "tokens_seen": 49807360,
+  "final_train_loss": 3.723193407058716,
+  "final_val_loss": 3.7433570265769958,
+  "tokens_per_sec": 5931.66823371944,
+  "peak_mem_bytes": 36969447424,
+  "wall_time_s": 8396.855325937271,
+  "params": 20105216,
+  "step_size": 0.5,
+  "loss_history": [
+    {
+      "step": 0,
+      "tokens": 262144,
+      "train_loss": 10.857038497924805,
+      "tok_per_s": 4624.516890939764
+    },
+    {
+      "step": 10,
+      "tokens": 2883584,
+      "train_loss": 7.8237104415893555,
+      "tok_per_s": 5020.4464107404165
+    },
+    {
+      "step": 20,
+      "tokens": 5505024,
+      "train_loss": 5.840569019317627,
+      "tok_per_s": 4938.437429229686
+    },
+    {
+      "step": 30,
+      "tokens": 8126464,
+      "train_loss": 5.574439525604248,
+      "tok_per_s": 5143.906608089805
+    },
+    {
+      "step": 40,
+      "tokens": 10747904,
+      "train_loss": 5.3345417976379395,
+      "tok_per_s": 5353.05842653115
+    },
+    {
+      "step": 50,
+      "tokens": 13369344,
+      "train_loss": 5.003354549407959,
+      "tok_per_s": 5481.434252287564
+    },
+    {
+      "step": 60,
+      "tokens": 15990784,
+      "train_loss": 4.692227363586426,
+      "tok_per_s": 5570.157853705395
+    },
+    {
+      "step": 70,
+      "tokens": 18612224,
+      "train_loss": 4.413845062255859,
+      "tok_per_s": 5635.9393774297805
+    },
+    {
+      "step": 80,
+      "tokens": 21233664,
+      "train_loss": 4.198216915130615,
+      "tok_per_s": 5670.94361469612
+    },
+    {
+      "step": 90,
+      "tokens": 23855104,
+      "train_loss": 4.076765060424805,
+      "tok_per_s": 5720.223328707397
+    },
+    {
+      "step": 100,
+      "tokens": 26476544,
+      "train_loss": 3.9924633502960205,
+      "tok_per_s": 5755.115882989744
+    },
+    {
+      "step": 110,
+      "tokens": 29097984,
+      "train_loss": 3.9041123390197754,
+      "tok_per_s": 5775.47773371806
+    },
+    {
+      "step": 120,
+      "tokens": 31719424,
+      "train_loss": 3.8814854621887207,
+      "tok_per_s": 5809.39923125751
+    },
+    {
+      "step": 130,
+      "tokens": 34340864,
+      "train_loss": 3.8420639038085938,
+      "tok_per_s": 5830.869100756864
+    },
+    {
+      "step": 140,
+      "tokens": 36962304,
+      "train_loss": 3.804227590560913,
+      "tok_per_s": 5856.688858568105
+    },
+    {
+      "step": 150,
+      "tokens": 39583744,
+      "train_loss": 3.7768304347991943,
+      "tok_per_s": 5873.15159483727
+    },
+    {
+      "step": 160,
+      "tokens": 42205184,
+      "train_loss": 3.7159523963928223,
+      "tok_per_s": 5891.16413788173
+    },
+    {
+      "step": 170,
+      "tokens": 44826624,
+      "train_loss": 3.736147880554199,
+      "tok_per_s": 5909.420779451981
+    },
+    {
+      "step": 180,
+      "tokens": 47448064,
+      "train_loss": 3.7382640838623047,
+      "tok_per_s": 5925.742834415226
+    },
+    {
+      "step": 189,
+      "tokens": 49807360,
+      "train_loss": 3.723193407058716,
+      "tok_per_s": 5931.668283235674
+    }
+  ],
+  "note": "Reversible leapfrog at practical max batch (512) for sustained run"
+}

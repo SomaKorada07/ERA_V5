@@ -1,0 +1,27 @@
+{
+  "description": "Relative L2 error of the input reconstructed by running the stack in reverse. Leapfrog reverses exactly (layer l is evaluated at the held state p_l); naive euler cannot.",
+  "n_layer": 9,
+  "rows": [
+    {
+      "step_size": 0.1,
+      "leapfrog_rel_err": 6.75249580694981e-08,
+      "euler_naive_rel_err": 0.001836823532357812
+    },
+    {
+      "step_size": 0.25,
+      "leapfrog_rel_err": 1.282764401366876e-07,
+      "euler_naive_rel_err": 0.011660084128379822
+    },
+    {
+      "step_size": 0.5,
+      "leapfrog_rel_err": 2.6493913196645735e-07,
+      "euler_naive_rel_err": 0.048971906304359436
+    },
+    {
+      "step_size": 1.0,
+      "leapfrog_rel_err": 6.999521815487242e-07,
+      "euler_naive_rel_err": 0.23247309029102325
+    }
+  ],
+  "verdict": "leapfrog/midpoint is reversible to machine precision at every h; naive euler is not reversible and its error grows with h."
+}

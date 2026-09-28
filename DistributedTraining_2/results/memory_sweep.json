@@ -1,0 +1,30 @@
+{
+  "note": "Measured on Apple M3 Max (68.7 GB unified memory), MPS backend, torch 2.13. Model: 20.1M params, n_layer=9, n_embd=256, n_head=8, block_size=512, vocab=50257. Metric: torch.mps.driver_allocated_memory() high-water (includes weights, Adam states, gradients, activations, and MPS allocator cache). Throughput varies +-20% with thermal/background load; memory is the stable signal.",
+  "seq_len": 512,
+  "standard": [
+    {"batch_size": 32,  "peak_gb": 20.06, "tok_per_s": 10061, "status": "ok"},
+    {"batch_size": 64,  "peak_gb": 25.96, "tok_per_s": 11575, "status": "ok"},
+    {"batch_size": 128, "peak_gb": 37.25, "tok_per_s": 12638, "status": "ok"},
+    {"batch_size": 256, "peak_gb": 77.00, "tok_per_s": 8058,  "status": "ok (paging: exceeds 68GB physical, into swap)"},
+    {"batch_size": 288, "peak_gb": 76.93, "tok_per_s": 1787,  "status": "ok (heavy paging, ~7x slower)"},
+    {"batch_size": 320, "peak_gb": 75.79, "tok_per_s": 1712,  "status": "ok (heavy paging)"},
+    {"batch_size": 384, "peak_gb": null,  "tok_per_s": null,  "status": "OOM (MPS backend out of memory)"}
+  ],
+  "reversible": [
+    {"batch_size": 128, "peak_gb": 17.90, "tok_per_s": 13115, "status": "ok"},
+    {"batch_size": 256, "peak_gb": 20.59, "tok_per_s": 17700, "status": "ok"},
+    {"batch_size": 512, "peak_gb": 36.97, "tok_per_s": 13521, "status": "ok"},
+    {"batch_size": 896, "peak_gb": 52.87, "tok_per_s": 10272, "status": "ok"},
+    {"batch_size": 960, "peak_gb": 59.68, "tok_per_s": 11951, "status": "ok"},
+    {"batch_size": 1024,"peak_gb": null,  "tok_per_s": null,  "status": "FAIL: MPSGraph tensor-dim limit (NOT memory; only ~62GB needed) - a Metal kernel cap, absent on CUDA"}
+  ],
+  "headlines": {
+    "same_batch_256_mem_ratio": 3.74,
+    "same_batch_128_mem_ratio": 2.08,
+    "max_batch_standard": 256,
+    "max_batch_standard_hard_oom_at": 384,
+    "max_batch_reversible": 960,
+    "max_batch_ratio": 3.75,
+    "rev512_vs_std128_same_memory": "reversible fits 4x the batch (512 vs 128) in ~37GB"
+  }
+}

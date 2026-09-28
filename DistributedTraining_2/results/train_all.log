@@ -1,0 +1,173 @@
+
+########## 01_baseline ##########
+/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -m revllm.run_single --name 01_baseline --mode standard --integrator euler --bs 32 --token_budget 50000000 --lr 0.0006 --note Baseline: standard residual (Euler h=1). Fixed batch.
+[data] cached: /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/train.bin, /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/val.bin
+=== 01_baseline | mode=standard/euler bs=32 budget=50,000,000 device=mps ===
+[01_baseline] step     0/3051  loss 10.8623  11,821 tok/s  peak 20.04GB
+[01_baseline] step    50/3051  loss 7.0229  16,292 tok/s  peak 20.06GB
+[01_baseline] step   100/3051  loss 4.5726  17,156 tok/s  peak 20.06GB
+[01_baseline] step   150/3051  loss 4.0417  17,446 tok/s  peak 20.06GB
+[01_baseline] step   200/3051  loss 3.8579  17,362 tok/s  peak 20.06GB
+[01_baseline] step   250/3051  loss 3.6443  15,884 tok/s  peak 20.06GB
+[01_baseline] step   300/3051  loss 3.4560  9,926 tok/s  peak 20.06GB
+[01_baseline] step   350/3051  loss 3.3159  9,759 tok/s  peak 20.06GB
+[01_baseline] step   400/3051  loss 3.2227  10,046 tok/s  peak 20.06GB
+[01_baseline] step   450/3051  loss 3.0891  10,371 tok/s  peak 20.06GB
+[01_baseline] step   500/3051  loss 3.0891  10,658 tok/s  peak 20.06GB
+[01_baseline] step   550/3051  loss 2.8821  10,909 tok/s  peak 20.06GB
+[01_baseline] step   600/3051  loss 2.9754  10,938 tok/s  peak 20.06GB
+[01_baseline] step   650/3051  loss 2.7890  10,236 tok/s  peak 20.06GB
+[01_baseline] step   700/3051  loss 2.6980  10,108 tok/s  peak 20.06GB
+[01_baseline] step   750/3051  loss 2.6310  10,199 tok/s  peak 20.06GB
+[01_baseline] step   800/3051  loss 2.7599  10,335 tok/s  peak 20.06GB
+[01_baseline] step   850/3051  loss 2.6802  10,477 tok/s  peak 20.06GB
+[01_baseline] step   900/3051  loss 2.4886  10,613 tok/s  peak 20.06GB
+[01_baseline] step   950/3051  loss 2.4867  10,718 tok/s  peak 20.06GB
+[01_baseline] step  1000/3051  loss 2.4878  10,714 tok/s  peak 20.06GB
+[01_baseline] step  1050/3051  loss 2.5407  10,655 tok/s  peak 20.06GB
+[01_baseline] step  1100/3051  loss 2.3688  10,651 tok/s  peak 20.06GB
+[01_baseline] step  1150/3051  loss 2.3810  10,666 tok/s  peak 20.06GB
+[01_baseline] step  1200/3051  loss 2.4676  10,704 tok/s  peak 20.06GB
+[01_baseline] step  1250/3051  loss 2.3248  10,740 tok/s  peak 20.06GB
+[01_baseline] step  1300/3051  loss 2.2570  10,739 tok/s  peak 20.06GB
+[01_baseline] step  1350/3051  loss 2.2428  10,730 tok/s  peak 20.06GB
+[01_baseline] step  1400/3051  loss 2.1188  10,750 tok/s  peak 20.06GB
+[01_baseline] step  1450/3051  loss 2.2373  10,768 tok/s  peak 20.06GB
+[01_baseline] step  1500/3051  loss 2.2878  10,803 tok/s  peak 20.06GB
+[01_baseline] step  1550/3051  loss 2.2266  10,840 tok/s  peak 20.06GB
+[01_baseline] step  1600/3051  loss 2.2245  10,880 tok/s  peak 20.06GB
+[01_baseline] step  1650/3051  loss 2.2337  10,919 tok/s  peak 20.06GB
+[01_baseline] step  1700/3051  loss 2.1426  10,956 tok/s  peak 20.06GB
+[01_baseline] step  1750/3051  loss 2.1507  10,986 tok/s  peak 20.06GB
+[01_baseline] step  1800/3051  loss 2.1359  11,003 tok/s  peak 20.06GB
+[01_baseline] step  1850/3051  loss 2.1519  11,023 tok/s  peak 20.06GB
+[01_baseline] step  1900/3051  loss 2.0965  11,018 tok/s  peak 20.06GB
+[01_baseline] step  1950/3051  loss 2.1602  11,038 tok/s  peak 20.06GB
+[01_baseline] step  2000/3051  loss 2.1050  11,058 tok/s  peak 20.06GB
+[01_baseline] step  2050/3051  loss 2.1041  11,083 tok/s  peak 20.06GB
+[01_baseline] step  2100/3051  loss 1.9882  11,109 tok/s  peak 20.06GB
+[01_baseline] step  2150/3051  loss 1.9056  11,135 tok/s  peak 20.06GB
+[01_baseline] step  2200/3051  loss 1.9568  11,163 tok/s  peak 20.06GB
+[01_baseline] step  2250/3051  loss 2.0838  11,191 tok/s  peak 20.06GB
+[01_baseline] step  2300/3051  loss 2.0171  11,216 tok/s  peak 20.06GB
+[01_baseline] step  2350/3051  loss 2.0248  11,231 tok/s  peak 20.06GB
+[01_baseline] step  2400/3051  loss 1.9417  11,234 tok/s  peak 20.06GB
+[01_baseline] step  2450/3051  loss 2.0471  11,226 tok/s  peak 20.06GB
+[01_baseline] step  2500/3051  loss 2.0293  11,229 tok/s  peak 20.06GB
+[01_baseline] step  2550/3051  loss 1.9570  11,242 tok/s  peak 20.06GB
+[01_baseline] step  2600/3051  loss 2.0220  11,253 tok/s  peak 20.06GB
+[01_baseline] step  2650/3051  loss 2.0276  11,268 tok/s  peak 20.06GB
+[01_baseline] step  2700/3051  loss 1.9994  11,287 tok/s  peak 20.06GB
+[01_baseline] step  2750/3051  loss 2.0210  11,303 tok/s  peak 20.06GB
+[01_baseline] step  2800/3051  loss 1.9037  11,316 tok/s  peak 20.06GB
+[01_baseline] step  2850/3051  loss 1.9294  11,330 tok/s  peak 20.06GB
+[01_baseline] step  2900/3051  loss 1.8789  11,345 tok/s  peak 20.06GB
+[01_baseline] step  2950/3051  loss 1.9523  11,360 tok/s  peak 20.06GB
+[01_baseline] step  3000/3051  loss 1.8780  11,371 tok/s  peak 20.06GB
+[01_baseline] step  3050/3051  loss 2.0087  11,383 tok/s  peak 20.06GB
+
+01_baseline: params=20.11M  bs=32  tok/step=16,384  final_val_loss=2.0149  speed=11,383 tok/s  peak_mem=20.058 GB
+[saved] /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/results/01_baseline.json
+[01_baseline] exit code 0
+
+########## 02_reversible ##########
+/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -m revllm.run_single --name 02_reversible --mode reversible --integrator leapfrog --bs 32 --token_budget 50000000 --lr 0.0006 --note Reversible leapfrog, SAME batch as baseline.
+[data] cached: /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/train.bin, /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/val.bin
+=== 02_reversible | mode=reversible/leapfrog bs=32 budget=50,000,000 device=mps ===
+[02_reversible] step     0/3051  loss 10.8569  9,380 tok/s  peak 15.75GB
+[02_reversible] step    50/3051  loss 6.9969  11,145 tok/s  peak 15.75GB
+[02_reversible] step   100/3051  loss 4.5644  11,278 tok/s  peak 15.75GB
+[02_reversible] step   150/3051  loss 4.0255  11,322 tok/s  peak 15.75GB
+[02_reversible] step   200/3051  loss 3.8328  11,349 tok/s  peak 15.75GB
+[02_reversible] step   250/3051  loss 3.6261  11,273 tok/s  peak 15.75GB
+[02_reversible] step   300/3051  loss 3.4578  11,306 tok/s  peak 15.75GB
+[02_reversible] step   350/3051  loss 3.3189  11,289 tok/s  peak 15.75GB
+[02_reversible] step   400/3051  loss 3.2263  11,293 tok/s  peak 15.75GB
+[02_reversible] step   450/3051  loss 3.1065  11,203 tok/s  peak 15.75GB
+[02_reversible] step   500/3051  loss 3.0977  11,015 tok/s  peak 15.75GB
+[02_reversible] step   550/3051  loss 2.8963  10,832 tok/s  peak 15.75GB
+[02_reversible] step   600/3051  loss 2.9989  10,743 tok/s  peak 15.75GB
+[02_reversible] step   650/3051  loss 2.8156  10,686 tok/s  peak 15.75GB
+[02_reversible] step   700/3051  loss 2.7259  10,672 tok/s  peak 15.75GB
+[02_reversible] step   750/3051  loss 2.6547  10,674 tok/s  peak 15.75GB
+[02_reversible] step   800/3051  loss 2.7985  10,682 tok/s  peak 15.75GB
+[02_reversible] step   850/3051  loss 2.7158  10,724 tok/s  peak 15.75GB
+[02_reversible] step   900/3051  loss 2.5344  10,755 tok/s  peak 15.75GB
+[02_reversible] step   950/3051  loss 2.5322  10,736 tok/s  peak 15.75GB
+[02_reversible] step  1000/3051  loss 2.5182  10,682 tok/s  peak 15.75GB
+[02_reversible] step  1050/3051  loss 2.5985  10,665 tok/s  peak 15.75GB
+[02_reversible] step  1100/3051  loss 2.4219  10,668 tok/s  peak 15.75GB
+[02_reversible] step  1150/3051  loss 2.4377  10,678 tok/s  peak 15.75GB
+[02_reversible] step  1200/3051  loss 2.5156  10,698 tok/s  peak 15.75GB
+[02_reversible] step  1250/3051  loss 2.3892  10,718 tok/s  peak 15.75GB
+[02_reversible] step  1300/3051  loss 2.3223  10,739 tok/s  peak 15.75GB
+[02_reversible] step  1350/3051  loss 2.2989  10,757 tok/s  peak 15.75GB
+[02_reversible] step  1400/3051  loss 2.1726  10,770 tok/s  peak 15.75GB
+[02_reversible] step  1450/3051  loss 2.2950  10,774 tok/s  peak 15.75GB
+[02_reversible] step  1500/3051  loss 2.3535  10,776 tok/s  peak 15.75GB
+[02_reversible] step  1550/3051  loss 2.2782  10,773 tok/s  peak 15.75GB
+[02_reversible] step  1600/3051  loss 2.2901  10,782 tok/s  peak 15.75GB
+[02_reversible] step  1650/3051  loss 2.2987  10,794 tok/s  peak 15.75GB
+[02_reversible] step  1700/3051  loss 2.1974  10,809 tok/s  peak 15.75GB
+[02_reversible] step  1750/3051  loss 2.2079  10,820 tok/s  peak 15.75GB
+[02_reversible] step  1800/3051  loss 2.1905  10,818 tok/s  peak 15.75GB
+[02_reversible] step  1850/3051  loss 2.1980  10,824 tok/s  peak 15.75GB
+[02_reversible] step  1900/3051  loss 2.1525  10,828 tok/s  peak 15.75GB
+[02_reversible] step  1950/3051  loss 2.2142  10,838 tok/s  peak 15.75GB
+[02_reversible] step  2000/3051  loss 2.1590  10,851 tok/s  peak 15.75GB
+[02_reversible] step  2050/3051  loss 2.1654  10,867 tok/s  peak 15.75GB
+[02_reversible] step  2100/3051  loss 2.0431  10,871 tok/s  peak 15.75GB
+[02_reversible] step  2150/3051  loss 1.9692  10,631 tok/s  peak 15.75GB
+[02_reversible] step  2200/3051  loss 2.0128  10,355 tok/s  peak 15.75GB
+[02_reversible] step  2250/3051  loss 2.1492  10,109 tok/s  peak 15.75GB
+[02_reversible] step  2300/3051  loss 2.0871  9,885 tok/s  peak 15.75GB
+[02_reversible] step  2350/3051  loss 2.0773  9,686 tok/s  peak 15.75GB
+[02_reversible] step  2400/3051  loss 2.0038  9,523 tok/s  peak 15.75GB
+[02_reversible] step  2450/3051  loss 2.1010  9,381 tok/s  peak 15.75GB
+[02_reversible] step  2500/3051  loss 2.0741  9,253 tok/s  peak 15.75GB
+[02_reversible] step  2550/3051  loss 2.0131  9,132 tok/s  peak 15.75GB
+[02_reversible] step  2600/3051  loss 2.0839  9,021 tok/s  peak 15.75GB
+[02_reversible] step  2650/3051  loss 2.0846  8,912 tok/s  peak 15.75GB
+[02_reversible] step  2700/3051  loss 2.0537  8,815 tok/s  peak 15.75GB
+[02_reversible] step  2750/3051  loss 2.0715  8,725 tok/s  peak 15.75GB
+[02_reversible] step  2800/3051  loss 1.9579  8,637 tok/s  peak 15.75GB
+[02_reversible] step  2850/3051  loss 1.9799  8,558 tok/s  peak 15.75GB
+[02_reversible] step  2900/3051  loss 1.9246  8,480 tok/s  peak 15.75GB
+[02_reversible] step  2950/3051  loss 2.0037  8,409 tok/s  peak 15.75GB
+[02_reversible] step  3000/3051  loss 1.9406  8,344 tok/s  peak 15.75GB
+[02_reversible] step  3050/3051  loss 2.0550  8,277 tok/s  peak 15.75GB
+
+02_reversible: params=20.11M  bs=32  tok/step=16,384  final_val_loss=2.0656  speed=8,277 tok/s  peak_mem=15.755 GB
+[saved] /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/results/02_reversible.json
+[02_reversible] exit code 0
+
+########## 03_reversible_max ##########
+/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -m revllm.run_single --name 03_reversible_max --mode reversible --integrator leapfrog --bs 896 --token_budget 50000000 --lr 0.0015 --note Reversible leapfrog pushed to max batch (896).
+[data] cached: /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/train.bin, /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/val.bin
+=== 03_reversible_max | mode=reversible/leapfrog bs=896 budget=50,000,000 device=mps ===
+[03_reversible_max] step     0/108  loss 10.8563  5,665 tok/s  peak 52.86GB
+[data] cached: /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/train.bin, /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/data/val.bin
+=== 03_reversible_max | mode=reversible/leapfrog bs=512 budget=50,000,000 device=mps ===
+[03_reversible_max] step     0/190  loss 10.8570  4,625 tok/s  peak 36.96GB
+[03_reversible_max] step    10/190  loss 7.8237  5,020 tok/s  peak 36.97GB
+[03_reversible_max] step    20/190  loss 5.8406  4,938 tok/s  peak 36.97GB
+[03_reversible_max] step    30/190  loss 5.5744  5,144 tok/s  peak 36.97GB
+[03_reversible_max] step    40/190  loss 5.3345  5,353 tok/s  peak 36.97GB
+[03_reversible_max] step    50/190  loss 5.0034  5,481 tok/s  peak 36.97GB
+[03_reversible_max] step    60/190  loss 4.6922  5,570 tok/s  peak 36.97GB
+[03_reversible_max] step    70/190  loss 4.4138  5,636 tok/s  peak 36.97GB
+[03_reversible_max] step    80/190  loss 4.1982  5,671 tok/s  peak 36.97GB
+[03_reversible_max] step    90/190  loss 4.0768  5,720 tok/s  peak 36.97GB
+[03_reversible_max] step   100/190  loss 3.9925  5,755 tok/s  peak 36.97GB
+[03_reversible_max] step   110/190  loss 3.9041  5,775 tok/s  peak 36.97GB
+[03_reversible_max] step   120/190  loss 3.8815  5,809 tok/s  peak 36.97GB
+[03_reversible_max] step   130/190  loss 3.8421  5,831 tok/s  peak 36.97GB
+[03_reversible_max] step   140/190  loss 3.8042  5,857 tok/s  peak 36.97GB
+[03_reversible_max] step   150/190  loss 3.7768  5,873 tok/s  peak 36.97GB
+[03_reversible_max] step   160/190  loss 3.7160  5,891 tok/s  peak 36.97GB
+[03_reversible_max] step   170/190  loss 3.7361  5,909 tok/s  peak 36.97GB
+[03_reversible_max] step   180/190  loss 3.7383  5,926 tok/s  peak 36.97GB
+[03_reversible_max] step   189/190  loss 3.7232  5,932 tok/s  peak 36.97GB
+
+03_reversible_max: params=20.11M  bs=512  tok/step=262,144  final_val_loss=3.7434  speed=5,932 tok/s  peak_mem=36.969 GB
+[saved] /Users/sokorada/Documents/ERA_V5/DistributedTraining_2/results/03_reversible_max.json
