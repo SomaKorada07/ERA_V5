@@ -1,0 +1,1237 @@
+Axiom
+Axiom
+Dashboard
+Courses
+
+EAG V1
+OLD END
+ERA V3
+END 2021
+EMLO 2021
+EMLO 2.0
+OLD EVA (2)
+OLD EVA 4
+OLD EPAi 1.0/2.0
+EIP 3 Phase 1
+EIP 3 Phase 2
+EIP 4 Phase 1
+ERA V5
+Calendar
+Grades
+Settings
+
+Collapse
+Courses
+ERA V5
+Session 14 - Mixture-of-Experts
+
+Search...
+
+
+Mark Complete
+Exit
+Session 14: Mixture-of-Experts
+0. Why this session exists
+The feed-forward network in each transformer layer holds most of the model's parameters. In a standard layer, every token passes through all of those parameters.
+
+STANDARD LAYER                          MIXTURE-OF-EXPERTS LAYER
+
+token                                   token
+  │                                       │
+  ▼                                       ▼
+┌──────────────────────────┐            router  ── scores 128 small networks
+│  one feed-forward block  │              │
+│  6,144 wide              │              ▼
+│  every weight is used    │            picks 8 of them, each 768 wide
+└──────────────────────────┘              │
+                                          ▼
+                                        8 × 768 = 6,144 of width is used
+                                        120 small networks sit idle for this token
+A mixture-of-experts layer stores many feed-forward networks and runs only the few that the router picks for each token.
+
+That one change lets the number of parameters grow while the work done for each token stays small. It also creates three new problems, and each of them is a part of this session.
+
+Choosing. A small network called the router has to decide which few networks each token uses.
+Balancing. Left alone, the router sends most tokens to a few favourites, and the rest never learn.
+Placing. The networks are spread across GPUs, so every token travels to the GPUs that hold its choices and travels back.
+A fourth topic is how such a model is built. It can be trained from scratch, and it can also be grown from a smaller model that already works.
+
+1. Introduction
+This session uses one model throughout. It has 48 layers, a hidden size of 2,048, and a mixture-of-experts feed-forward block in every layer. The block holds 128 small feed-forward networks, and each token uses 8 of them.
+
+part	value
+layers	48
+hidden size	2,048
+attention	32 query heads and 4 key-value heads, 128 dimensions each
+small feed-forward networks per layer	128
+used per token	8
+width of each small network	768
+vocabulary	151,936
+This is the published shape of Qwen3-30B-A3B, an open model from 2025. Using a real shape means every number below can be checked against the released model.
+
+GQA
+
+The ratio of 32 to 4 is grouped-query attention (GQA). Every query head still asks its own question, but the key and value heads are shared: 32 ÷ 4 = 8, so each group of 8 query heads reads from one shared key/value head.
+
+query heads:  Q0..Q7   Q8..Q15   Q16..Q23   Q24..Q31
+                 │         │          │          │
+KV heads:       KV0       KV1        KV2        KV3
+Why share them: the KV cache. During generation the model keeps every past token's keys and values in memory. That cache grows with the number of KV heads, and it is what limits long context and batch size when serving.
+
+For Our reference model, per token, in 16-bit:
+
+2
+ (K and V)
+×
+4
+ heads
+×
+128
+×
+2
+ bytes
+×
+48
+ layers
+=
+96
+ KiB
+2 (K and V)×4 heads×128×2 bytes×48 layers=96 KiB
+
+KV heads	cache per token	one 32,768-token sequence
+full multi-head attention	32	768 KiB	24 GiB
+Our reference model (GQA)	4	96 KiB	3 GiB
+multi-query attention	1	24 KiB	0.75 GiB
+So 4 KV heads cut the cache by 8×. The same card can serve 8× more sequences, or 8× longer ones.
+
+Why 4 and not 1. Multi-query attention, with one KV head for everyone, saves the most memory but costs quality. The GQA paper (Ainslie et al., 2023) showed that a small number of KV groups recovers almost all of full attention's quality while keeping almost all of the memory saving. Four to eight groups is the common choice now: Llama 3 uses 8, Qwen3-30B-A3B uses 4.
+
+It also saves parameters. The K and V projections are 2 × 2,048 × 512 = 2.1M per layer. With 32 KV heads they would be 16.8M.
+
+One detail that looks odd. 32 query heads × 128 dimensions = 4,096, which is wider than the hidden size of 2,048. Qwen3 does this on purpose: the query projection widens 2,048 to 4,096, and the output projection brings it back. So the heads are not a slice of the hidden size here, which is why the attention parameters come to 18.87M per layer rather than a figure you would get from 2,048 alone.
+
+One practical constraint. The KV-head count also limits tensor parallelism. With 4 KV heads, splitting attention across 4 GPUs puts one KV head on each, and splitting across 8 forces copies. Our layout uses expert parallelism and no tensor parallelism, so this doesn't bite here.
+
+The lesson only lists these numbers in the model table. I can add a two-sentence note under the table, with the 96 KiB against 768 KiB figure, if you want the reason on the page too. I'd do that as a guarded edit, since the lesson is now on Axiom.
+
+The model has two sizes. The total parameters are every weight stored in the model. The active parameters are the weights one token actually uses on its way through.
+
+per layer	across 48 layers
+attention	18.87M	0.91B
+one small feed-forward network, 
+3
+×
+2048
+×
+768
+3×2048×768	4.72M	
+all 128 of them	604.0M	28.99B
+the router, 
+2048
+×
+128
+2048×128	0.26M	0.01B
+embeddings, input and output		0.62B
+total		30.53B
+active, attention + 8 small networks + router + embeddings	56.9M	3.35B
+Qwen reports 30.5B total and 3.3B active, which matches.
+
+Training a model costs about 6 floating-point operations per active parameter per token. Memory is set by the total, because every weight has to be stored along with its gradient and optimizer state, which is 16 bytes per weight in standard mixed-precision training.
+
+a standard 30.2B model	our 30.53B mixture-of-experts model
+training state, 16 bytes per weight	450 GiB	455 GiB
+work per token, 
+6
+×
+6× active	181 GFLOP	20.1 GFLOP
+Carry this forward: Our reference model stores 30.53B parameters and uses 3.35B for each token, so it needs the memory of a 30B model and about one ninth of its compute.
+
+2. Terminology
+Each term below is used throughout the session.
+
+A feed-forward network is the block after attention in each layer. In Our reference model it has three weight matrices: a gate matrix and an up matrix that widen each token from 2,048 to an inner width, and a down matrix that brings it back to 2,048.
+
+An expert is one of the small feed-forward networks inside a mixture-of-experts layer. Our reference model has 128 experts per layer, each with an inner width of 768.
+
+The router, also called the gate, is a single matrix of size 
+2048
+×
+128
+2048×128. It gives every token one score for each expert.
+
+Top-k means keeping the 
+k
+k highest scores. Our reference model keeps the top 8, so 
+k
+=
+8
+k=8.
+
+A routed expert is chosen by the router. A shared expert is used by every token without being chosen. Our reference model has 128 routed experts and no shared expert.
+
+Total parameters are every weight the model stores. Active parameters are the weights one token uses. Our reference model has 30.53B total and 3.35B active.
+
+The load of an expert is the share of tokens the router sends to it. With 128 experts and 8 picks per token, a perfectly even load is 
+8
+/
+128
+=
+6.25
+%
+8/128=6.25% of tokens for each expert.
+
+The capacity of an expert is the most tokens it is allowed to process in one batch. A token that arrives after its expert is full is dropped, which means it skips that expert.
+
+A GPU is one accelerator card. This session uses two NVIDIA GPUs. The H100 holds 80 GB, which is 74.5 GiB. The B200 holds 180 GB, which is 167.6 GiB. A node is one machine holding eight GPUs of the same kind.
+
+NVLink connects the GPUs inside a node. It carries about 450 GB per second in each direction for each H100 and about 900 GB per second for each B200. Each GPU also has one network card that carries 50 GB per second in each direction to other nodes.
+
+Data parallelism gives every GPU a copy of the model and different data. ZeRO-1 divides the optimizer state, 12 of the 16 bytes per weight, across those copies. Tensor parallelism divides each weight matrix across GPUs. Pipeline parallelism divides the model by layers.
+
+A micro-batch is the group of sequences one GPU processes in one forward and backward pass.
+
+Expert parallelism places different experts on different GPUs. It is written with its degree, for example EP = 8.
+
+An all-to-all is a communication step in which every GPU sends a different piece of data to every other GPU. Dispatch is the all-to-all that sends tokens to their experts. Combine is the all-to-all that brings the results back.
+
+Carry this forward: an expert is a small feed-forward network, the router scores all of them for every token, and top-k keeps the best few.
+
+3. The Mixture-of-Experts Layer
+A standard layer runs attention and then one feed-forward network. A mixture-of-experts layer keeps the attention exactly as it is and replaces the feed-forward network with a router and a set of experts.
+
+                    one token, 2,048 numbers wide
+                                │
+                                ▼
+                   ┌─────────── ROUTER ───────────┐
+                   │   128 scores, keep top 8     │
+                   └──────────────┬───────────────┘
+            ┌──────────┬──────────┼──────────┬──────────┐
+            ▼          ▼          ▼          ▼          ▼
+         expert 3   expert 17  expert 40   ...     expert 121      (8 chosen)
+            │          │          │          │          │
+          × 0.21     × 0.16     × 0.14      ...       × 0.09       (router weights)
+            └──────────┴──────────┼──────────┴──────────┘
+                                  ▼
+                        sum of the 8 outputs
+                                  │
+                                  ▼
+                          next layer
+The router weights of the chosen experts add up to one. The output is their weighted sum.
+
+The router picks the experts, and its scores decide how much each chosen expert counts.
+
+The detail. Write 
+x
+x for the token's vector, 
+E
+i
+E 
+i
+​
+  for expert 
+i
+i, and 
+g
+i
+g 
+i
+​
+  for the weight the router gives it. With 
+T
+T the set of chosen experts,
+
+y
+=
+∑
+i
+∈
+T
+g
+i
+ 
+E
+i
+(
+x
+)
+y=∑ 
+i∈T
+​
+ g 
+i
+​
+ E 
+i
+​
+ (x)
+
+Each expert is a SwiGLU feed-forward network with its own three matrices.
+
+E
+i
+(
+x
+)
+=
+W
+i
+down
+(
+SiLU
+(
+W
+i
+gate
+x
+)
+⊙
+W
+i
+up
+x
+)
+E 
+i
+​
+ (x)=W 
+i
+down
+​
+ (SiLU(W 
+i
+gate
+​
+ x)⊙W 
+i
+up
+​
+ x)
+
+Here 
+W
+i
+gate
+W 
+i
+gate
+​
+  and 
+W
+i
+up
+W 
+i
+up
+​
+  are 
+768
+×
+2048
+768×2048, and 
+W
+i
+down
+W 
+i
+down
+​
+  is 
+2048
+×
+768
+2048×768. When a model has shared experts, their outputs are added to the sum with no router weight. In Our reference model every one of the 48 layers is a mixture-of-experts layer. Some models keep their first one to three layers as standard feed-forward layers, because routing in the first layer settles more slowly.
+
+Carry this forward: a mixture-of-experts layer keeps attention and replaces the feed-forward network with a router and many experts, whose chosen outputs are summed with the router's weights.
+
+4. What an Expert Is
+An expert is a small feed-forward network with the same shape as all the others in its layer. It has no attention and no embeddings of its own, so it cannot produce text by itself. A sentence passes through many different experts, because the router chooses again for every token and in every layer.
+
+Our reference model's own configuration shows what an expert is in numbers. The configuration file lists a standard feed-forward width of 6,144, and each token uses 8 experts of width 768.
+
+8
+×
+768
+=
+6144
+8×768=6144
+
+ONE STANDARD FEED-FORWARD NETWORK, 6,144 WIDE
+[ 768 | 768 | 768 | 768 | 768 | 768 | 768 | 768 ]
+
+WHAT ONE TOKEN USES IN Our reference model
+8 slices of 768, chosen from 128 slices that the layer stores
+Each token uses the width of one standard feed-forward network, assembled from 8 small pieces that the router chooses from 128.
+
+Xiaomi's MiMo-V2.6 models, released in September 2026, follow the same pattern. Their one standard layer is 16,384 wide, and each token uses 8 experts of width 2,048, which is 
+8
+×
+2048
+=
+16384
+8×2048=16384.
+
+The name "expert" suggests a specialist in a subject. Training never assigns a subject to an expert. The router and the experts learn together, and any specialization that appears comes out of that training.
+
+The detail. Mixtral 8x7B, a 2023 model, shows how the parameters are counted. It has 8 experts, and each expert has the size of a 7B model's feed-forward network. Multiplying 8 by 7B would give 56B. The attention and embeddings are shared, so the actual total is 47B. About 45B of the 47B sit in the experts, which is 96%. In Our reference model the experts hold 28.99B of the 30.53B, which is 95%.
+
+Carry this forward: an expert is one small feed-forward network among many identical ones, and the token's 8 experts together have the width of one standard feed-forward network.
+
+5. Why Mixture-of-Experts
+A model improves when it has more parameters, and it gets more expensive when each token uses more of them. A mixture-of-experts model raises the first number and keeps the second one small.
+
+Capacity grows with the total parameters, and cost per token grows with the active parameters.
+
+The detail. The measured gains are large.
+
+study	comparison	result
+Switch Transformer, Google, 2021	64 experts against a standard model with the same work per token	same quality 7 times faster
+Krajewski and colleagues, 2024	a mixture-of-experts model tuned for 
+10
+20
+10 
+20
+  operations	matches a standard model given 20 times the compute
+Ling team, 2025	0.85B active out of 17.5B total	matches a 6.1B standard model at over 7 times less compute
+Kimi K2, 2025	48 experts per active expert against 8	same loss at 1.69 times fewer operations
+There is also a theory result. Chen and colleagues proved in 2022 that on data made of separate clusters, a single network of a given kind reaches at most 87.5% accuracy, while a mixture of such networks trained by gradient descent reaches nearly 100%. In their analysis the router learns to recognize the clusters, and each expert learns at least one of them.
+
+The costs are real as well.
+
+Memory follows the total. All 30.53B weights must be stored and trained, even though a token uses 3.35B of them.
+Communication. Experts live on different GPUs, and every token has to travel to them and back. DeepSeek-V3 reported about one unit of communication time for every unit of compute time.
+Stability. Switch Transformer diverged when its router ran in 16-bit format.
+Fine-tuning. The ST-MoE study found that mixture-of-experts models overfit small fine-tuning datasets more easily than standard models.
+Carry this forward: a mixture-of-experts model reaches the quality of a much larger standard model for the compute of a small one, and it pays for that with memory and communication.
+
+6. Active and Total Parameters
+The two sizes of a mixture-of-experts model control different costs.
+
+cost	set by	Our reference model
+compute per token	active parameters	3.35B
+weights stored	total parameters	30.53B
+gradients and optimizer state	total parameters	30.53B
+activations kept for the backward pass	active width, which is top-k times expert width	
+8
+×
+768
+8×768
+Compute follows the active parameters, and memory follows the total.
+
+The detail. The ratio of total to active parameters has grown quickly.
+
+model	total	active	total ÷ active
+Mixtral 8x7B, 2023	47B	13B	3.6
+Our reference model (Qwen3-30B-A3B shape), 2025	30.5B	3.3B	9.1
+DeepSeek-V3, 2024	671B	37B	18.1
+MiMo-V2.6-Flash, 2026	310B	15B	20.7
+gpt-oss-120b, 2025	116.8B	5.1B	22.8
+MiMo-V2.6-Pro, 2026	1.02T	42B	24.3
+Kimi K2, 2025	1.04T	32.6B	31.9
+DeepSeek-V4-Pro, 2026	1.6T	49B	32.7
+DeepSeek-V4.1-Flash, 2026	552B	16B	34.5
+DeepSeek-V4.1-Flash also carries 196B parameters of Engram, a separate lookup memory addressed by short sequences of tokens. Engram is added into the model at two layers and never passes through the router, so it is counted apart from the experts. Its active size is 8B while reading a prompt and 16B while generating, because reading a prompt runs only the lower 20 of its 40 layers.
+
+Kimi K2's report measured the effect of the ratio directly. It defines sparsity as total experts divided by active experts. At the same active size, a sparsity of 48 reached a validation loss of 1.5 with 1.69 times fewer operations than a sparsity of 8.
+
+
+Active and total. Our reference model's layer with its 128 experts. Change the number of experts and the number each token uses, and read the total, the active size, the compute per token and the training memory.
+
+Carry this forward: the total decides how many GPUs are needed to hold the model, and the active size decides how long each token takes.
+
+7. The Router
+The router multiplies the token's vector by its matrix and gets one number for each expert. These numbers are called logits. A function then turns the logits into scores, the router keeps the top 8, and the kept scores are rescaled so that they add up to one.
+
+token (2,048 numbers) × router matrix (2,048 × 128)  →  128 logits
+128 logits  →  score function  →  128 scores
+128 scores  →  keep the top 8   →  divide by their sum  →  8 weights that add up to 1
+The detail. Take a small router with 8 experts and 
+k
+=
+2
+k=2, and a token whose logits are
+
+expert	0	1	2	3	4	5	6	7
+logit	2.0	0.5	1.2	−0.3	0.9	1.8	−1.0	0.1
+softmax score	0.320	0.071	0.144	0.032	0.107	0.262	0.016	0.048
+sigmoid score	0.881	0.622	0.769	0.426	0.711	0.858	0.269	0.525
+Softmax divides 
+e
+z
+i
+e 
+z 
+i
+​
+ 
+  by the sum over all experts, so the scores compete and add up to one. Experts 0 and 5 win with 0.320 and 0.262, and rescaling gives weights of 0.55 and 0.45.
+
+Sigmoid computes 
+1
+/
+(
+1
++
+e
+−
+z
+i
+)
+1/(1+e 
+−z 
+i
+​
+ 
+ ) for each expert on its own, so each score lies between 0 and 1 without competing. The same two experts win with 0.881 and 0.858, and rescaling gives 0.507 and 0.493.
+
+Our reference model uses softmax over all 128 experts, keeps the top 8, and rescales them. DeepSeek-V3, Kimi K2, GLM-4.5 and MiMo-V2.6 use sigmoid. DeepSeek-V4 changed the score function to 
+softplus
+(
+z
+)
+softplus(z)
+​
+ . A study of balancing methods found sigmoid less sensitive to uneven load than softmax.
+
+Some models multiply the rescaled weights by a constant called the routed scaling factor, which is 2.5 in DeepSeek-V3 and 1.5 in DeepSeek-V4.1-Flash. When each expert is small, each weight is also small, and the factor restores the size of the layer's output. The LongCat-Flash report derives this effect, and the DeepSeek reports give the values without an explanation.
+
+Two practical details keep the router stable.
+
+It runs in 32-bit format. Switch Transformer's base model diverged in 16-bit format. Casting only the router to 32-bit fixed it, and the model ran faster than full 32-bit training, at 1,390 examples per second against 1,160.
+It starts small. Switch initialized its weights, the router included, at one tenth of the usual scale. At the usual scale the quality varied widely between runs, and at one tenth it was stable.
+
+The router. One token's logits for 8 experts, turned into scores by softmax or by sigmoid, with the top k kept and rescaled into weights. Token A is the example worked above.
+
+Carry this forward: the router turns one matrix product into scores, keeps the top k, and rescales them into weights that add up to one.
+
+8. Expert Size and Shared Experts
+Early mixture-of-experts models used a few large experts. Current models use many small ones, and the number of ways to choose them grows enormously.
+
+MIXTRAL, 2023                          Our reference model, 2025
+8 experts, choose 2                    128 experts, choose 8
+28 possible pairs                      1,429,702,652,400 possible groups of 8
+Smaller experts give the router far more combinations to build each token's network from.
+
+The detail. DeepSeekMoE, published in January 2024, named two problems with a few large experts. With only 8 or 16 experts, each expert must hold very different kinds of knowledge. Several experts also end up learning the same common knowledge. It proposed two fixes.
+
+Fine-grained experts. Each expert is split into 
+m
+m smaller ones, and 
+m
+m times as many are chosen, which keeps the compute the same. With 16 experts and a choice of 2 there are 120 combinations. Splitting each into 4 gives 64 experts and a choice of 8, which gives 4,426,165,368 combinations.
+
+The trend in expert width, measured as a fraction of the hidden size, shows the shift.
+
+model	expert width ÷ hidden size
+Mixtral 8x7B	3.5
+Llama 4	1.6
+Our reference model	0.375
+DeepSeek-V3 and Kimi K2	0.286
+Qwen3-Next and Qwen3.5	0.25
+Krajewski and colleagues fitted a scaling law with granularity as a variable, and they found that experts the size of a full feed-forward network are "not optimal at almost any computational budget".
+
+Shared experts. A shared expert is used by every token, which gives common knowledge one place to live. In DeepSeekMoE's 2B model, removing the shared expert and adding one more routed expert at the same compute raised the loss on the Pile from 1.808 to 2.414. DeepSeek-V3, Kimi K2, GLM and DeepSeek-V4.1-Flash use one shared expert. Our reference model, gpt-oss, MiniMax-M2 and MiMo-V2.6 use none, and the OLMoE study found shared experts gave no benefit in its setting.
+
+Carry this forward: current models use many small experts because they give the router more combinations, and some add one shared expert for knowledge that every token needs.
+
+9. What Experts Learn
+Researchers have measured which tokens reach which experts. The result surprises most people.
+
+Most experts specialize by the kind of token, and only some by the subject of the text.
+
+WHAT THE ROUTER TENDS TO GROUP                     WHAT IT RARELY GROUPS
+punctuation                                        "biology" vs "physics"
+verbs, articles, conjunctions                      "English" vs "French"
+numbers and counting
+names
+code indentation, "self" in Python
+The detail. The strongest measured studies agree on this picture.
+
+study	model	finding
+ST-MoE, 2022	32 experts per layer	Encoder experts specialize in punctuation, verbs, names and numbers. Words with the same role in two languages, such as "for" and "pour", reach the same expert, so there are no language experts.
+Mixtral, 2024	Mixtral 8x7B	arXiv papers, biology papers and philosophy papers route almost identically. Python's "self" and code indentation always reach the same experts. Consecutive tokens share an expert 24% to 28% of the time in the middle layers, against 12.5% by chance.
+OLMoE, 2024	64 experts per layer	Routing is 60% settled after 1% of training. One first-layer expert takes nearly all arXiv tokens. Later layers route by the token the model is about to predict.
+Super Experts, 2025	Our reference model's shape	3 experts out of 6,144 create the model's extreme activations. Removing those 3 drops GSM8K accuracy by 53%. Removing 3 random experts changes almost nothing.
+SAFEx, 2025	Our reference model's shape	Switching off 12 experts reduces the model's refusal rate by 22%.
+Multilingual routing, 2025	Our reference model's shape and others	Routing is language-specific in the early and late layers and shared across languages in the middle layers.
+MONET, 2024	262,144 small experts per layer	Deleting the Python experts drops Python accuracy by 30.6 points, and other programming languages lose about 1 point.
+REAP, 2025	Qwen3-Coder-480B, Kimi K2	Half the experts can be removed with under 2% loss in accuracy.
+Taken together, experts in a standard mixture-of-experts model specialize strongly by token type and syntax. Subject-level experts appear in some models and some layers, and later sections show which training choices encourage them. A few experts matter far more than the rest, and many can be removed.
+
+Carry this forward: experts mostly learn kinds of tokens, a few carry outsized weight, and many can be removed with little loss.
+
+10. Load Imbalance and Collapse
+The router and the experts train together, and this creates a loop.
+
+expert 6 is chosen a little more often
+        │
+        ▼
+expert 6 receives more gradient updates and gets better
+        │
+        ▼
+the router scores expert 6 higher
+        │
+        ▼
+expert 6 is chosen even more often  ──► the other experts get fewer updates and fall behind
+A router left alone favours a few experts, and the rest stop learning.
+
+This is called routing collapse. An expert that receives no tokens is called a dead expert. It still occupies memory, and it contributes nothing.
+
+The detail. The effect has been measured many times.
+
+Shazeer and colleagues, 2017. With no balancing, the busiest expert received 17.8 times the average load.
+OLMoE, 2024. Without a balancing loss, the first layer initially sent every token to its sixth expert, and most other experts stayed unused.
+MiMo-V2.6, 2026. During reinforcement learning with a trainable router, one layer of the Pro model changed within 20 steps. The busiest expert went from 6 to 16 times the average load, and the share of nearly unused experts went from 0.5% to 22%. Restoring only the router weights from before reinforcement learning brought the balance back, so the team froze the router for all of it.
+Imbalance also slows training down. Each GPU holds some of the experts, and every GPU waits for the one whose experts received the most tokens. In MiMo-V2.6, one GPU received more than 30 times the average number of tokens within one micro-batch and ran out of memory.
+
+The standard measure of imbalance is the maximum violation.
+
+MaxVio
+=
+max
+⁡
+i
+load
+i
+−
+load
+‾
+load
+‾
+MaxVio= 
+load
+ 
+max 
+i
+​
+ load 
+i
+​
+ − 
+load
+ 
+​
+ 
+
+A value of 0 means perfectly even, and a value of 1 means the busiest expert has twice the average.
+
+Carry this forward: routing collapses because success feeds on itself, and balancing is the set of methods that stop it.
+
+11. Capacity and Token Dropping
+The first methods limited how many tokens each expert could take in one batch. Every expert got a fixed number of slots, and any token beyond that was dropped.
+
+expert 12, capacity 640 slots
+[■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■] full
+token 641 arrives  ──► dropped: it skips expert 12 and continues through the residual connection
+The detail. Capacity is the average number of tokens per expert multiplied by a capacity factor.
+
+capacity
+=
+tokens
+×
+k
+experts
+×
+capacity factor
+capacity= 
+experts
+tokens×k
+​
+ ×capacity factor
+
+For one sequence of 8,192 tokens in Our reference model, the average is 
+8192
+×
+8
+/
+128
+=
+512
+8192×8/128=512 tokens per expert. A capacity factor of 1.25 gives each expert 640 slots.
+
+Switch Transformer used capacity factors of 1.0 and 1.25 and dropped fewer than 1% of tokens. The fixed size made the computation simple, because every expert processed a tensor of the same shape.
+
+Dropping has a cost. MegaBlocks, published in 2022, rewrote the expert computation as block-sparse matrix multiplication so that experts of any load run in one pass and no token is dropped. Its dropless model reduced validation loss by 0.26 where a model with capacity factor 1.0 reduced it by 0.15. DeepSeek-V3, OLMoE and Our reference model drop no tokens, and a 2026 study of over 2,000 training runs found that dropless routing gives a consistent gain.
+
+
+Capacity. Tokens arriving at 16 experts with an uneven load. Raise or lower the capacity factor and count the dropped tokens, then switch to dropless and compare.
+
+Carry this forward: capacity limits give every expert a fixed number of slots, and current models drop no tokens because dropping costs quality.
+
+12. Auxiliary Losses
+The first widely used fix for collapse adds a second term to the training loss. This auxiliary loss is small when the load is even and large when a few experts take most of the tokens.
+
+The detail. Switch Transformer's version is
+
+L
+aux
+=
+α
+⋅
+N
+⋅
+∑
+i
+=
+1
+N
+f
+i
+ 
+P
+i
+L 
+aux
+​
+ =α⋅N⋅∑ 
+i=1
+N
+​
+ f 
+i
+​
+ P 
+i
+​
+ 
+
+where 
+N
+N is the number of experts, 
+f
+i
+f 
+i
+​
+  is the fraction of tokens sent to expert 
+i
+i, and 
+P
+i
+P 
+i
+​
+  is the average router probability given to expert 
+i
+i. The count 
+f
+i
+f 
+i
+​
+  has no gradient, because choosing the top k is a step with no slope. The probability 
+P
+i
+P 
+i
+​
+  has a gradient. Minimizing the product lowers the router's probabilities for busy experts and raises them for idle ones.
+
+Take 
+N
+=
+128
+N=128 and 
+α
+=
+0.01
+α=0.01.
+
+state	
+∑
+f
+i
+P
+i
+∑f 
+i
+​
+ P 
+i
+​
+ 	
+L
+aux
+L 
+aux
+​
+ 
+perfectly even, every 
+f
+i
+=
+P
+i
+=
+1
+/
+128
+f 
+i
+​
+ =P 
+i
+​
+ =1/128	
+1
+/
+128
+1/128	0.01
+collapsed onto one expert, 
+f
+=
+P
+=
+1
+f=P=1	1	1.28
+Switch tested values of 
+α
+α from 0.1 to 0.00001 and chose 0.01. Our reference model's configuration uses 0.001.
+
+The auxiliary loss has a drawback. Its gradient flows into the same router weights that the language loss is training, so the two objectives pull against each other. A study in 2024 measured this directly: a small 
+α
+α let the load collapse, and a large 
+α
+α made the model's perplexity worse.
+
+A second loss targets stability. The router z-loss from the ST-MoE study penalizes large logits.
+
+L
+z
+=
+1
+B
+∑
+j
+=
+1
+B
+(
+log
+⁡
+∑
+i
+=
+1
+N
+e
+z
+j
+,
+i
+)
+2
+L 
+z
+​
+ = 
+B
+1
+​
+ ∑ 
+j=1
+B
+​
+ (log∑ 
+i=1
+N
+​
+ e 
+z 
+j,i
+​
+ 
+ ) 
+2
+ 
+
+Large logits cause rounding errors in the router's exponentials. With a coefficient of 0.001, all three test runs stayed stable, against four of six runs without it.
+
+Carry this forward: an auxiliary loss penalizes uneven load through the router's gradient, and that gradient competes with the language loss.
+
+13. Auxiliary-Loss-Free Balancing
+A method published in 2024 balances the load without adding anything to the loss. Every expert gets a bias, a single number that is added to its score only when choosing the top k. The weight that multiplies the expert's output still comes from the original score.
+
+choosing:   score_i + bias_i   →   top 8
+weighting:  score_i            →   rescaled into the 8 weights
+
+after each step:
+expert was busier than average   →  bias_i goes down by 0.001
+expert was quieter than average  →  bias_i goes up by 0.001
+The bias steers which experts are chosen and leaves the gradient of the language loss untouched.
+
+The detail. With 
+γ
+γ as the update speed, after each training step every bias moves by
+
+b
+i
+←
+b
+i
++
+γ
+⋅
+sign
+(
+load
+‾
+−
+load
+i
+)
+b 
+i
+​
+ ←b 
+i
+​
+ +γ⋅sign( 
+load
+ −load 
+i
+​
+ )
+
+In the router example from Section 7, adding a bias of −0.5 to expert 5 lowers its sigmoid score for selection from 0.858 to 0.358. Expert 2 at 0.769 is chosen in its place, and expert 0 keeps its weight from the original scores.
+
+The original study, by Wang and colleagues, found 
+γ
+=
+0.001
+γ=0.001 best. At 1B parameters the auxiliary loss gave a perplexity of 9.56 with a maximum violation of 0.72, and the bias method gave 9.50 with 0.04. At 3B the numbers were 7.97 with 0.52 against 7.92 with 0.04.
+
+DeepSeek-V3 adopted the method in 2024 with 
+γ
+=
+0.001
+γ=0.001 for the first 14.3T training tokens and 0 for the last 500B. It kept a very small sequence-level auxiliary loss with a weight of 0.0001, to stop extreme imbalance within a single sequence. This combination is now the common recipe. GLM-4.5, Kimi K2, DeepSeek-V4, Ling and MiMo use it.
+
+DeepSeek-V4.1-Flash, released in September 2026, trains on text and images. It keeps two sets of biases, one for text tokens and one for image tokens, and updates them separately at 0.001 each. Its report explains that balancing the combined load can hide an imbalance inside one of the two kinds of tokens.
+
+The Lightning LM models, a family trained by The School of AI in 2026 on single nodes of eight GPUs, used this method at 5B, 9B and 120B. The 5B and 9B models used the sign rule above. The 120B model, with 460 experts per layer, used a three-tier controller that adds a stronger correction when an expert's load leaves a target band. Its update speed was halved from 0.0001 to 0.00005 at step 732, after the controller was seen to over-correct.
+
+
+Collapse and balancing. Tokens flow to 16 experts over training steps. Run it with no balancing, with an auxiliary loss, and with the bias method, and watch the loads and the count of dead experts.
+
+Carry this forward: a per-expert bias used only for choosing balances the load without touching the language loss, and it is the method most current models use.
+
+14. Balancing Scope
+Every balancing method counts the load over some group of tokens. That group can be one sequence, one micro-batch on one GPU, or the whole batch across all GPUs.
+
+BALANCED OVER EACH MICRO-BATCH              BALANCED OVER THE WHOLE BATCH
+a micro-batch of only code                  code, maths and prose together
+must still use every expert evenly          experts can divide the work by subject
+Balancing over a small group forces every group to use every expert, which blocks experts from specializing.
+
+The detail. The Qwen team measured this in 2025. Most frameworks counted the load in each micro-batch, which holds only a few sequences, so the rule applied almost sequence by sequence. They changed the count to cover the whole batch by adding the counts across GPUs before computing the loss.
+
+model	balanced over	perplexity	benchmark change
+3.4B total, 0.6B active	4 sequences	8.167	
+512 sequences	8.038	MMLU 41.63 → 43.48
+15B total, 2.54B active	16 sequences	5.778	
+512 sequences	5.603	GSM8K 48.07 → 54.28
+Under micro-batch balancing, no expert took more than 15% of the maths tokens. Under whole-batch balancing, many experts took more than 20% of them. The Qwen3 models, including Our reference model's shape, train with whole-batch balancing. DeepSeek-V3 found the same direction at 1B parameters: validation loss of 2.258 with sequence-level balancing and 2.253 with whole-batch balancing.
+
+
+Balancing scope. Micro-batches of code, maths and prose routed to 16 experts. Switch between balancing each micro-batch and balancing the whole batch, and read how expert use changes by subject.
+
+Carry this forward: load should be balanced across the whole batch, because balancing each small group prevents subject experts from forming.
+
+15. Growing a Mixture-of-Experts Model
+A mixture-of-experts model does not have to start from random weights. A standard model that already works can be turned into one, and a mixture-of-experts model with a few experts can be turned into one with many. This is called upcycling.
+
+STANDARD FEED-FORWARD NETWORK, 6,144 wide
+[ a | b | c | d | e | f | g | h ]      8 slices of 768
+
+COPY          every expert = the whole network                    experts start identical
+PARTITION     each expert = some of the slices                    experts start different
+DROP          each expert = a copy with half its neurons redrawn  experts start close
+Growing keeps what the smaller model already learned, and the hard part is making the copies become different from each other.
+
+The detail. Four methods turn a standard model into a mixture-of-experts model.
+
+method	how the experts start	measured result
+Sparse upcycling, Google, 2022	every expert is a full copy of the feed-forward network, and only the router is new	beats continuing the standard model at 10% to 60% extra budget
+Partition, Qwen1.5-MoE, 2024	the network is cut into pieces, and each expert takes pieces	64 experts from a 1.8B model, with 75% lower training cost than a 7B model
+Drop-upcycling, 2025	each expert is a copy with a fraction 
+r
+r of its neurons redrawn	
+r
+=
+0.5
+r=0.5 was best, and the result matched a 13B standard model at a quarter of the training compute
+Branch-Train-MiX, Meta, 2024	copies are trained separately on maths, code and Wikipedia, then joined as experts	scored 47.9 against 46.3 for sparse upcycling
+Our reference model's shape shows how partition works in numbers. The standard width of 6,144 cuts into exactly 8 pieces of 768, and our layer needs 128 experts. Qwen2's recipe covers that gap in four steps: make about 16 copies of the network, shuffle each copy's neurons, cut the copies into experts, and redraw half of each expert's weights.
+
+Upcycling saves compute only up to a point. In the original study, a mixture-of-experts model trained from scratch caught up after about 120% of the standard model's budget. In OLMoE's test it caught up after 25%. Skywork's rule is to train from scratch once the mixture-of-experts budget reaches twice the cost of the standard model. DeepSeek-V4.1-Flash and MiMo-V2.6 were both trained from scratch.
+
+Three studies from 2026 grow the number of experts inside a mixture-of-experts model.
+
+study	growth	method	result
+Expert Upcycling, Amazon	32 → 64 experts	copy each expert, add tiny noise to the router biases of the copies	saves 24% to 32% of GPU hours; drop-upcycling was slightly worse than plain copying at this size
+Orthogonal Growth, Microsoft	96 → 192 experts	copy with small noise and double top-k as well	keeping top-k fixed performed worse; the grown model gained 10.6% over training from scratch at equal extra compute
+EMO	8 → 16 → 32 → 64 → 128	double at planned points	saves 10% of GPU hours
+The published expansions double the expert count at most. The Lightning LM models went much further. The dense 2B model became a 5B model with 20 routed experts and one shared expert by partition: the dense network became the shared expert, and each routed expert took an overlapping random half of its 2,048 neurons. The chance that a neuron was left out of all 20 experts is 
+(
+1
+−
+1024
+/
+2048
+)
+20
+(1−1024/2048) 
+20
+ , about one in a million. The 9B model then grew from 20 experts to 460. Each expert was cloned 23 times with half of its neurons redrawn, the router was tiled from 20 entries to 460 with small noise, and top-k rose from 2 to 12.
+
+An earlier attempt, which cloned the experts without redrawing any neurons, produced a failure that the published growth studies do not describe. With hard top-k routing, the number of dead experts rose from 27 to 38, 122, 154 and 168 out of 460 within a few hundred steps. The router could not tell near-identical clones apart, so each family of 23 clones collapsed onto a few members. The Lightning LM report calls this "collapse along clone families". The fix replaced hard top-k with probabilistic selection during the early training window, so that every clone received some gradient before the router settled. The released drop-upcycled model showed the same early concentration in a milder form. At step 4000 the 120B model had zero dead experts, a busiest expert at about 0.5% of the load, and a top-10 share of 4.09% against an even share of 2.17%.
+
+
+Growing experts. One standard feed-forward network turned into experts by copying, partitioning and dropping, then cloned into many. Switch the routing between hard top-k and probabilistic selection and watch the clone families.
+
+Carry this forward: a model can be grown by copying and perturbing experts, and the new experts must be protected until the router learns to tell them apart.
+
+16. Expert Parallelism
+Our reference model's experts hold 28.99B parameters, far more than one GPU should train alone. Expert parallelism places different experts on different GPUs.
+
+ONE B200 NODE, EP = 8, 128 experts per layer
+
+GPU 0: experts   0 to  15        GPU 4: experts  64 to  79
+GPU 1: experts  16 to  31        GPU 5: experts  80 to  95
+GPU 2: experts  32 to  47        GPU 6: experts  96 to 111
+GPU 3: experts  48 to  63        GPU 7: experts 112 to 127
+Every token then travels to the GPUs that hold its 8 experts and comes back.
+
+1. attention runs at home on GPU 2               (full copy of attention on every GPU)
+2. router runs at home: token "the" scores 128 experts, keeps 8
+      picks experts 3, 17, 40, 41, 77, 90, 101, 126
+3. look up the fixed map, e ÷ 16:
+      3→GPU0  17→GPU1  40→GPU2  41→GPU2  77→GPU4  90→GPU5  101→GPU6  126→GPU7
+      (40 and 41 are at home, so those two copies never leave)
+4. count: GPU 2 now knows how many tokens it will send to each of the 8 GPUs
+5. exchange the counts: a tiny all-to-all of just those numbers,
+      so every GPU knows how much it is about to receive and can set aside space
+6. dispatch: the real all-to-all sends the token vectors
+7. each GPU runs its 16 experts on whatever arrived
+8. combine: results go back along the same paths, in reverse
+9. unpermute: GPU 2 puts results back in the original token order and adds the 8 weighted outputs
+10. next layer: attention at home again, and the router decides afresh
+Expert parallelism moves tokens to experts, and every mixture-of-experts layer pays for two all-to-alls in each direction of training.
+
+The detail. Each token sends 
+k
+k copies of its vector, one to each chosen expert. In 16-bit format that is 
+8
+×
+2048
+×
+2
+=
+32,768
+8×2048×2=32,768 bytes for dispatch, and the same again for combine. With 8 GPUs, 
+7
+/
+8
+7/8 of that leaves the GPU. For one sequence of 8,192 tokens on one GPU,
+
+2
+×
+32768
+×
+8192
+×
+7
+8
+×
+48
+ layers
+×
+2
+=
+45.1
+ GB
+2×32768×8192× 
+8
+7
+​
+ ×48 layers×2=45.1 GB
+
+where the last factor of 2 counts the backward pass, which sends gradients along the same paths.
+
+link	time for 45.1 GB
+NVLink 5, inside a B200 node	0.050 s
+NVLink 4, inside an H100 node	0.100 s
+one network card, between nodes	0.90 s
+The compute for the same sequence is 
+6
+×
+3.35
+×
+10
+9
+×
+8192
+=
+164.8
+6×3.35×10 
+9
+ ×8192=164.8 TFLOP, which takes about 0.073 s at a B200's peak of about 2.25 PFLOPS in 16-bit format. Inside a B200 node the communication is close to the compute, so the two must overlap. Between nodes the communication is 12 times the compute. DeepSeek's DeepEP library measured 726 GB/s for this traffic inside one B200 node and about 90 GB/s across two nodes. Megatron-LM's guideline is to keep expert parallelism inside one node and to add pipeline parallelism when more nodes are needed.
+
+The grouped multiplication in step 4 needs enough tokens per expert to use the GPU well. With 8 GPUs each sending one sequence, each expert receives on average 
+8
+×
+8192
+×
+8
+/
+128
+=
+4096
+8×8192×8/128=4096 tokens. An estimate from the B200's compute and memory speed puts the point where its matrix units stop waiting on memory at about 280 tokens per expert, so 4,096 is comfortably above it.
+
+
+Dispatch and combine. One token on each of 8 GPUs picks 8 experts. Each dot is one copy of a token. Its colour is the GPU that holds the chosen expert, and its digit is the token's home GPU. Step through route, dispatch, compute and combine, and change the link to read the traffic and the time for a full sequence.
+
+Carry this forward: expert parallelism spreads the experts across GPUs, and its all-to-all traffic stays fast only inside one node.
+
+17. Expert Parallelism with the Other Forms
+A mixture-of-experts model has two kinds of weights, and they are divided differently.
+
+                  ATTENTION, ROUTER, EMBEDDINGS          EXPERTS
+held by           every GPU keeps a full copy            each GPU keeps 16 of 128
+gradients summed  across all 8 GPUs                      within each expert's own group
+optimizer state   divided across all 8 (ZeRO-1)          already divided by expert parallelism
+Expert parallelism divides the expert weights and their optimizer state, and it leaves the activations of each token where they were.
+
+The detail. Our reference model's dense parts, which are attention, router and embeddings, hold 1.54B parameters. Its experts hold 28.99B. On one node of 8 B200 GPUs with EP = 8,
+
+per GPU	calculation	memory
+experts, 16 of 128 per layer	
+3.62
+×
+10
+9
+×
+16
+3.62×10 
+9
+ ×16 bytes	54.0 GiB
+dense parts, with ZeRO-1 over 8 copies	
+1.54
+×
+10
+9
+×
+(
+4
++
+12
+/
+8
+)
+1.54×10 
+9
+ ×(4+12/8) bytes	7.9 GiB
+training state		61.9 GiB
+activations, one 8,192-token sequence, estimated at 34 bytes per token per hidden unit per layer	
+8192
+×
+2048
+×
+34
+×
+48
+8192×2048×34×48	25.5 GiB
+total		87.4 GiB
+That fits a B200 card of 167.6 GiB. It does not fit an H100 card of 74.5 GiB. Two H100 nodes with EP = 16 halve the expert memory, which gives 33.8 GiB of state and 59.3 GiB in total.
+
+Every expert exists on exactly one GPU when EP = 8 on 8 GPUs, so its gradient needs no summing across copies. When there are more GPUs than the expert-parallel degree, each expert has several copies, and their gradients are summed within that smaller group, called the expert data-parallel group.
+
+Megatron-LM's MoE Parallel Folding, published in 2025, lets attention layers and expert layers use different groupings of the same GPUs. Attention can use tensor parallelism while the experts use expert parallelism across the same eight cards. On 128 H100 GPUs it raised the utilization of Mixtral 8x22B from 46.3% to 49.3%.
+
+Two methods reduce the cost of communication and uneven load. DeepSeek-V3's DualPipe schedule runs the all-to-all of one micro-batch while the GPU computes another. For serving, DeepSeek's EPLB places extra copies of the busiest experts on spare GPUs, and in DeepSeek-V3's prefill deployment 32 extra experts were re-chosen about every 10 minutes.
+
+Carry this forward: expert parallelism divides expert memory, the dense parts still use data parallelism with ZeRO-1, and activations need the same care as in any large model.
+
+18. Case Studies (SELF STUDY)
+model	total / active	layers / hidden	routed + shared, top-k	expert width	router	balancing
+DeepSeek-V3, 2024	671B / 37B	61 / 7,168	256 + 1, top-8	2,048	sigmoid, scale 2.5	bias 0.001 + sequence loss 0.0001, 4-node limit
+DeepSeek-V4-Pro, 2026	1.6T / 49B	61 / 7,168	384 + 1, top-6	3,072	
+softplus
+softplus
+​
+ , scale 2.5	bias 0.001 + 0.0001, node limit removed
+DeepSeek-V4.1-Flash, 2026	552B + 196B Engram / 8B–16B	40 / 5,120	384 + 1, top-6	2,304	
+softplus
+softplus
+​
+ , scale 1.5	separate text and image biases, 0.001 each
+MiMo-V2.6-Flash, 2026	310B / 15B	48 / 4,096	256 + 0, top-8	2,048	sigmoid	bias + small sequence loss
+MiMo-V2.6-Pro, 2026	1.02T / 42B	70 / 6,144	384 + 0, top-8	2,048	sigmoid	bias + small sequence loss
+Kimi K2, 2025	1.04T / 32.6B	61 / 7,168	384 + 1, top-8	2,048	sigmoid, scale 2.827	bias (from its configuration)
+Qwen3-30B-A3B, 2025	30.5B / 3.3B	48 / 2,048	128 + 0, top-8	768	softmax	whole-batch loss 0.001
+Lightning LM 120B, 2026	118.7B / 5.9B	20 / 4,096	460 + 1, top-12	1,024	sigmoid	three-tier bias controller
+DeepSeek-V3. It trained on 2,048 H800 GPUs with 64-way expert parallelism across 8 nodes. Its NVLink was only about 3.2 times faster than its network, so it capped each token at 4 nodes. A token crosses the network once to each chosen node and reaches its experts there over NVLink.
+
+DeepSeek-V4. It removed the 4-node limit. Its first three mixture-of-experts layers route by a fixed hash of the token's identity with no learned router. After a loss spike it computes routing with slightly older weights, which costs about 20% more time and is switched on only when needed.
+
+DeepSeek-V4.1-Flash. Every one of its 40 layers is a mixture-of-experts layer, and the routed experts hold about 544B of its 552B parameters. It was trained from scratch on 45T tokens. Its weights show a learned router in the first layer, so the hash routing of V4 appears to have been dropped. Its routed experts are stored in 4-bit format.
+
+MiMo-V2.6. Both models use experts of width 2,048, top-8 and no shared expert. Pro gains its extra capacity from 1.5 times as many experts. During reinforcement learning the team froze the router after measuring the collapse described in Section 10, and recorded the experts chosen during generation so that training could replay the same choices.
+
+Kimi K2. Its report measured sparsity directly and chose 48 experts per active expert. It stopped there because larger sparsity made the infrastructure harder to run.
+
+Lightning LM. It grew from a dense 2B model to a 120B mixture-of-experts model on single nodes of eight GPUs, through the partition and cloning steps described in Section 15.
+
+19. Choosing a Mixture-of-Experts Layout
+The layout is decided by the two sizes of the model, in a fixed order.
+
+Step 1. Count the total and the active size. The total sets the training state: 30.53B parameters at 16 bytes each is 455 GiB. The active size sets the compute: 20.1 GFLOP per token.
+
+Step 2. Set expert parallelism to the number of GPUs in one node. That is 8, which places 16 of the 128 experts on each GPU and keeps the all-to-all on NVLink.
+
+Step 3. Divide the dense parts' optimizer state across the data-parallel copies. This is ZeRO-1, and for Our reference model it brings the dense parts to 7.9 GiB per GPU.
+
+Step 4. Check the training state per GPU. For Our reference model on one B200 node it is 61.9 GiB.
+
+Step 5. Add the activations. One 8,192-token sequence adds about 25.5 GiB. Recomputing some activations in the backward pass lowers this at the cost of extra compute.
+
+Step 6. Check the tokens per expert. Each expert should receive a few hundred tokens or more per step, or the grouped multiplication wastes the GPU.
+
+Step 7. Compare the all-to-all time with the compute. Inside a B200 node they are 0.050 s and 0.073 s per sequence, so overlapping them matters.
+
+Step 8. Cross nodes only when the model does not fit. Add a second node with EP = 16, or add pipeline parallelism across nodes, and consider limiting how many nodes each token may reach.
+
+Step 9. Measure the step time. The arithmetic gives candidate layouts, and the measured throughput chooses between them.
+
+layout	GPUs	training state	total with one sequence	fits
+one B200 node, EP = 8	8	61.9 GiB	87.4 GiB	yes, 167.6 GiB card
+one H100 node, EP = 8	8	61.9 GiB	87.4 GiB	no, 74.5 GiB card
+two H100 nodes, EP = 16	16	33.8 GiB	59.3 GiB	yes
+Megatron-LM publishes a training configuration for this exact model shape on one node of 8 B200 GPUs: expert parallelism 8, no tensor parallelism, no pipeline parallelism, and recomputation of the expert activation and the layer normalization.
+
+
+Choosing a layout. Our reference model on H100 or B200 nodes. Change the node type and the expert-parallel degree, and read the memory on each card, the tokens per expert and the all-to-all time.
+
+Carry this forward: keep expert parallelism inside a node, divide the dense parts with ZeRO-1, and add nodes only when the training state and activations do not fit.
+
+20. V5 Decisions
+If V5 uses a mixture-of-experts design, several choices follow from this session.
+
+Balancing. A per-expert bias used only for choosing, with an update speed near 0.001, a sequence-level loss near 0.0001, and load counted across the whole batch.
+No dropped tokens. Dropless routing with grouped expert computation.
+Expert parallelism inside a node. EP = 8 on one node, with ZeRO-1 for the dense parts.
+A stable router. 32-bit router computation, and a frozen router during reinforcement learning.
+Several questions remain open.
+
+question	what would settle it
+Dense or mixture-of-experts?	The compute budget, the memory available, and whether serving can hold all the total parameters.
+What total and active size?	A target quality, and the ratio of total to active that the hardware can hold.
+From scratch or grown from a dense model?	The planned training budget relative to the dense model's cost, since upcycling pays only below about twice that cost.
+How many experts, how wide, and a shared expert or none?	Small-scale runs at matched active size, which is how Kimi K2 chose 48 experts per active expert.
+H100 or B200 nodes?	Our shape fits one B200 node and needs two H100 nodes.
+21. Assignment
+Train a Linear model and convert that into an MoE! Your call on model size and data trained on, but must show they continue to train and reduce loss!
+
+
+
