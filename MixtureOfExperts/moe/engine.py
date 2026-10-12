@@ -130,20 +130,33 @@ def train_run(cfg: GPTConfig, name, batch_size, token_budget, train_bin, val_bin
 
 
 def _upcycle(moe_model: GPT, dense_model: GPT):
-    """Initialise an MoE model from a trained dense model: copy shared weights, and copy
-    each dense SwiGLU FFN into every expert (Expert-Upcycling). Requires expert_width to
-    equal the dense d_ff. Router is left at its small random init.
+    """Initialise a model from a checkpoint of another model (possibly a different
+    architecture): copy every matching (name, shape) parameter, and -- when the source is
+    a dense model and the target is MoE -- additionally copy its dense SwiGLU FFN into
+    every expert (Expert-Upcycling; requires expert_width to equal the dense d_ff). The
+    router, if any, is left at its small random init.
+
+    This also doubles as a plain "resume training" when src and dst share an architecture
+    (e.g. continuing a dense checkpoint, or continuing an already-upcycled MoE checkpoint):
+    the first loop copies everything by name, and the dense->expert loop below is a no-op
+    whenever the source has no dense FFN keys to copy.
     """
     dense_sd = dense_model.state_dict()
     with torch.no_grad():
         for name, p in moe_model.named_parameters():
             if name in dense_sd and dense_sd[name].shape == p.shape:
                 p.copy_(dense_sd[name])
-        # copy dense FFN -> each expert
+        # copy dense FFN -> each expert (only when the source actually has one; a source
+        # that is itself MoE -- e.g. continuing an upcycled checkpoint -- has no
+        # "ff.w_gate/w_up/w_down" keys, so this is skipped and the identity copy above
+        # already resumed its router + experts).
         for li, blk in enumerate(moe_model.blocks):
             if not blk.is_moe:
                 continue
             for w in ("w_gate", "w_up", "w_down"):
-                src = dense_sd[f"blocks.{li}.ff.{w}.weight"]
+                key = f"blocks.{li}.ff.{w}.weight"
+                if key not in dense_sd:
+                    continue
+                src = dense_sd[key]
                 for expert in blk.ff.experts:
                     getattr(expert, w).weight.copy_(src)

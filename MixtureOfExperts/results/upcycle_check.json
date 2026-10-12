@@ -1,0 +1,5 @@
+{
+  "dense_checkpoint_val_loss": 0.9286031210422516,
+  "moe_random_init_val_loss": 5.636594038009644,
+  "moe_upcycled_val_loss": 0.9368422174453735
+}
